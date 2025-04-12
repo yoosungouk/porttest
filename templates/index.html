@@ -472,16 +472,32 @@
                     <div class="chart-section">
                         <h2>담당자별 현황</h2>
                         <div style="overflow-x: auto;">
-                            <table id="staffStatsTable" class="data-table">
+                            <table id="serviceStatsTable" class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>담당자</th>
+                                        <th rowspan="2">서비스명</th>
+                                        <th colspan="4">2025년 4월</th>
+                                        <th colspan="4">2025년 3월</th>
+                                        <th colspan="4">총합계</th>
+                                    </tr>
+                                    <tr>
                                         <th>리드수</th>
-                                        <th>리드수임 점환율</th>
+                                        <th>유효리드수</th>
                                         <th>수임수</th>
+                                        <th>리드수임 전환율</th>
+                                        <th>리드수</th>
+                                        <th>유효리드수</th>
+                                        <th>수임수</th>
+                                        <th>리드수임 전환율</th>
+                                        <th>리드수</th>
+                                        <th>유효리드수</th>
+                                        <th>수임수</th>
+                                        <th>리드수임 전환율</th>
                                     </tr>
                                 </thead>
-                                <tbody></tbody>
+                                <tbody>
+                                    <!-- 테이블 내용은 JavaScript로 채워집니다 -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -910,66 +926,120 @@
         }
 
         function updateStaffStats(data) {
-            // 샘플 데이터
-            const sampleStaffData = {
-                '김영호': { total: 328, success: 62, rate: 18.9 },
-                '박지연': { total: 612, success: 118, rate: 19.3 },
-                '이민지': { total: 527, success: 125, rate: 23.7 }
+            // 샘플 데이터 - 서비스별 통계
+            const sampleServiceData = {
+                'null': {
+                    '2025-04': { leads: 0, validLeads: 0, success: 0, rate: 0 },
+                    '2025-03': { leads: 6, validLeads: 6, success: 0, rate: 0 },
+                    'total': { leads: 9017, validLeads: 6648, success: 1381, rate: 15.3 }
+                },
+                '본점': {
+                    '2025-04': { leads: 84, validLeads: 84, success: 7, rate: 8.3 },
+                    '2025-03': { leads: 164, validLeads: 164, success: 0, rate: 0 },
+                    'total': { leads: 2033, validLeads: 1914, success: 464, rate: 22.8 }
+                },
+                '양재2호점': {
+                    '2025-04': { leads: 16, validLeads: 16, success: 3, rate: 18.8 },
+                    '2025-03': { leads: 41, validLeads: 41, success: 0, rate: 0 },
+                    'total': { leads: 1824, validLeads: 1637, success: 338, rate: 18.5 }
+                },
+                '선릉점': {
+                    '2025-04': { leads: 38, validLeads: 38, success: 6, rate: 15.8 },
+                    '2025-03': { leads: 47, validLeads: 47, success: 0, rate: 0 },
+                    'total': { leads: 1402, validLeads: 1305, success: 368, rate: 26.2 }
+                },
+                '송파점': {
+                    '2025-04': { leads: 0, validLeads: 0, success: 0, rate: 0 },
+                    '2025-03': { leads: 1, validLeads: 1, success: 0, rate: 0 },
+                    'total': { leads: 1380, validLeads: 1147, success: 314, rate: 22.8 }
+                },
+                '서초점': {
+                    '2025-04': { leads: 0, validLeads: 0, success: 0, rate: 0 },
+                    '2025-03': { leads: 0, validLeads: 0, success: 0, rate: 0 },
+                    'total': { leads: 1074, validLeads: 793, success: 247, rate: 23.0 }
+                },
+                '영등포점': {
+                    '2025-04': { leads: 0, validLeads: 0, success: 0, rate: 0 },
+                    '2025-03': { leads: 2, validLeads: 2, success: 0, rate: 0 },
+                    'total': { leads: 1055, validLeads: 796, success: 237, rate: 22.5 }
+                },
+                '양재점': {
+                    '2025-04': { leads: 42, validLeads: 42, success: 11, rate: 26.2 },
+                    '2025-03': { leads: 2, validLeads: 2, success: 0, rate: 0 },
+                    'total': { leads: 1053, validLeads: 898, success: 323, rate: 30.7 }
+                },
+                '마곡점': {
+                    '2025-04': { leads: 3, validLeads: 3, success: 3, rate: 100.0 },
+                    '2025-03': { leads: 9, validLeads: 9, success: 0, rate: 0 },
+                    'total': { leads: 1038, validLeads: 770, success: 355, rate: 34.2 }
+                },
+                '성수점': {
+                    '2025-04': { leads: 0, validLeads: 0, success: 0, rate: 0 },
+                    '2025-03': { leads: 1, validLeads: 1, success: 0, rate: 0 },
+                    'total': { leads: 969, validLeads: 713, success: 151, rate: 15.6 }
+                },
+                'SC점': {
+                    '2025-04': { leads: 28, validLeads: 28, success: 9, rate: 32.1 },
+                    '2025-03': { leads: 5, validLeads: 5, success: 0, rate: 0 },
+                    'total': { leads: 823, validLeads: 699, success: 256, rate: 31.1 }
+                }
             };
             
-            let staffData = {};
-            
-            // 실제 데이터가 있으면 사용하고, 없으면 샘플 데이터 사용
-            if (data.deals && data.deals.length > 0) {
-                // 담당자별 통계 계산
-                data.deals.forEach(deal => {
-                    if (!deal.staff) return;
-                    
-                    if (!staffData[deal.staff]) {
-                        staffData[deal.staff] = {
-                            total: 0, // 리드수
-                            success: 0, // 수임수
-                            rate: 0 // 리드수임 점환율
-                        };
-                    }
-                    
-                    staffData[deal.staff].total++;
-                    if (deal.status === '성공') {
-                        staffData[deal.staff].success++;
-                    }
-                });
-
-                // 성공률 계산
-                for (const staff in staffData) {
-                    if (staffData[staff].total > 0) {
-                        staffData[staff].rate = ((staffData[staff].success / staffData[staff].total) * 100).toFixed(1);
-                    }
-                }
-                
-                // 데이터가 없거나 직원이 1명 미만인 경우 샘플 데이터 사용
-                if (Object.keys(staffData).length < 1) {
-                    console.log("실제 담당자 데이터가 부족하여 샘플 데이터를 사용합니다.");
-                    staffData = sampleStaffData;
-                }
-            } else {
-                console.log("실제 담당자 데이터가 없어 샘플 데이터를 사용합니다.");
-                staffData = sampleStaffData;
-            }
-            
             // 테이블로 데이터 표시
-            const tableBody = document.querySelector('#staffStatsTable tbody');
+            const tableBody = document.querySelector('#serviceStatsTable tbody');
             tableBody.innerHTML = '';
             
-            Object.entries(staffData).forEach(([staff, stats]) => {
+            // 서비스별 데이터 표시
+            Object.entries(sampleServiceData).forEach(([service, monthData]) => {
                 const row = document.createElement('tr');
+                const april = monthData['2025-04'];
+                const march = monthData['2025-03'];
+                const total = monthData['total'];
+                
+                // 셀에 배경색 추가 함수
+                const getColorClass = (rate) => {
+                    if (rate >= 30) return 'style="background-color: #1e88e5; color: white;"';
+                    if (rate >= 20) return 'style="background-color: #90caf9;"';
+                    if (rate > 0) return 'style="background-color: #e3f2fd;"';
+                    return '';
+                };
+                
                 row.innerHTML = `
-                    <td>${staff}</td>
-                    <td>${stats.total}</td>
-                    <td>${typeof stats.rate === 'number' ? stats.rate.toFixed(1) : stats.rate}%</td>
-                    <td>${stats.success}</td>
+                    <td>${service}</td>
+                    <td>${april.leads || '-'}</td>
+                    <td>${april.validLeads || '-'}</td>
+                    <td>${april.success || '-'}</td>
+                    <td ${getColorClass(april.rate)}>${april.rate ? april.rate + '%' : '-'}</td>
+                    <td>${march.leads || '-'}</td>
+                    <td>${march.validLeads || '-'}</td>
+                    <td>${march.success || '-'}</td>
+                    <td ${getColorClass(march.rate)}>${march.rate ? march.rate + '%' : '-'}</td>
+                    <td>${total.leads}</td>
+                    <td>${total.validLeads}</td>
+                    <td>${total.success}</td>
+                    <td ${getColorClass(total.rate)}>${total.rate}%</td>
                 `;
                 tableBody.appendChild(row);
             });
+            
+            // 총합계 행 추가
+            const totalRow = document.createElement('tr');
+            totalRow.innerHTML = `
+                <td style="font-weight: bold;">총 합계</td>
+                <td>328</td>
+                <td>328</td>
+                <td>62</td>
+                <td style="background-color: #e3f2fd;">18.9%</td>
+                <td>612</td>
+                <td>612</td>
+                <td>0</td>
+                <td>-</td>
+                <td>34,318</td>
+                <td>28,554</td>
+                <td>7,356</td>
+                <td style="background-color: #e3f2fd;">21.4%</td>
+            `;
+            tableBody.appendChild(totalRow);
         }
 
         // 데이터 로드 및 차트 업데이트 함수
