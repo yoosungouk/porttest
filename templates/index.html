@@ -414,10 +414,10 @@
                             <thead>
                                 <tr>
                                     <th>담당자</th>
-                                    <th>리드</th>
-                                    <th>상담</th>
-                                    <th>계약</th>
-                                    <th>완료</th>
+                                    <th>보유한 딜 수</th>
+                                    <th>상태 수</th>
+                                    <th>실패 수</th>
+                                    <th>성사 수</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -507,27 +507,38 @@
                 const pipelineTable = document.getElementById('pipelineTable').getElementsByTagName('tbody')[0];
                 pipelineTable.innerHTML = '';
 
-                // 모든 담당자와 파이프라인 단계 가져오기
+                // 모든 담당자 가져오기
                 const allOwners = Array.from(new Set(deals.map(deal => deal.deal_owner))).sort();
-                const pipelineStages = ['리드', '상담', '계약', '완료'];
 
                 // 각 담당자별 행 생성
                 allOwners.forEach(owner => {
                     const row = pipelineTable.insertRow();
                     
-                    // 담당자 이름 셀
+                    // 담당자의 딜 필터링
+                    const ownerDeals = deals.filter(deal => deal.deal_owner === owner);
+                    
+                    // 담당자 이름
                     const ownerCell = row.insertCell(0);
                     ownerCell.textContent = owner;
 
-                    // 각 파이프라인 단계별 건수 셀
-                    pipelineStages.forEach(stage => {
-                        const stageCell = row.insertCell();
-                        const count = deals.filter(deal => 
-                            deal.deal_owner === owner && 
-                            deal.deal_pipeline === stage
-                        ).length;
-                        stageCell.textContent = count;
-                    });
+                    // 보유한 딜 수
+                    const totalDealsCell = row.insertCell(1);
+                    totalDealsCell.textContent = ownerDeals.length;
+
+                    // 상태 수 (unique한 상태의 수)
+                    const statusCell = row.insertCell(2);
+                    const uniqueStatuses = new Set(ownerDeals.map(deal => deal.deal_status)).size;
+                    statusCell.textContent = uniqueStatuses;
+
+                    // 실패 수 (상태가 '실패'인 딜의 수)
+                    const failedCell = row.insertCell(3);
+                    const failedDeals = ownerDeals.filter(deal => deal.deal_status === '실패').length;
+                    failedCell.textContent = failedDeals;
+
+                    // 성사 수 (상태가 '성공'인 딜의 수)
+                    const successCell = row.insertCell(4);
+                    const successDeals = ownerDeals.filter(deal => deal.deal_status === '성공').length;
+                    successCell.textContent = successDeals;
                 });
 
                 // 상태 차트
