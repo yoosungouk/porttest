@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #272b4c;
@@ -83,10 +85,49 @@
             padding-bottom: 0.5rem;
         }
 
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title i {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
         .section-header h2 {
             font-weight: 500;
             color: var(--primary-color);
             margin: 0;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .update-button {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .update-button:hover {
+            background-color: var(--primary-light);
+        }
+
+        .update-button i {
+            font-size: 0.9rem;
         }
 
         .add-button {
@@ -321,7 +362,16 @@
 
         <section class="section">
             <div class="section-header">
-                <h2>대시보드</h2>
+                <div class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <h2>영업 대시보드</h2>
+                </div>
+                <div class="section-actions">
+                    <button class="update-button" onclick="loadDealsAnalytics()">
+                        <i class="fas fa-sync-alt"></i>
+                        실시간 업데이트
+                    </button>
+                </div>
             </div>
             <div class="dashboard-grid">
                 <div class="dashboard-card">
