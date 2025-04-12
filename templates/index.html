@@ -387,7 +387,8 @@
 
     <script>
         // Supabase 클라이언트 초기화
-        const supabase = supabase.createClient(
+        const { createClient } = supabase;
+        const supabaseClient = createClient(
             'https://zthihjyrifsbssbsaaky.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0aGloanlyaWZzYnNzYnNhYWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0Nzc5NzgsImV4cCI6MjA2MDA1Mzk3OH0.27a9HrNmT89ZoRExQUSpMkUNRmnawN1poJnYV0rXTHE'
         );
@@ -395,7 +396,7 @@
         // 딜 데이터 로드 및 차트 표시
         async function loadDealsAnalytics() {
             try {
-                const { data: deals, error } = await supabase
+                const { data: deals, error } = await supabaseClient
                     .from('deals')
                     .select('deal_owner, deal_pipeline, deal_status');
 
@@ -546,7 +547,7 @@
         // 전문분야 데이터 로드
         async function loadExpertise() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('expertise')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -594,7 +595,7 @@
             }
 
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('expertise')
                     .insert([
                         { 
