@@ -399,28 +399,10 @@
                     <h2>영업 대시보드</h2>
                 </div>
                 <div class="section-actions">
-                    <button class="update-button" onclick="loadDealsAnalytics()">
+                    <button class="update-button" onclick="loadData()">
                         <i class="fas fa-sync-alt"></i>
                         실시간 업데이트
                     </button>
-                </div>
-            </div>
-            <div class="dashboard-grid">
-                <div class="dashboard-card">
-                    <h3>총 딜 수</h3>
-                    <div class="value">-</div>
-                </div>
-                <div class="dashboard-card">
-                    <h3>딜 오너 수</h3>
-                    <div class="value">-</div>
-                </div>
-                <div class="dashboard-card">
-                    <h3>파이프라인 수</h3>
-                    <div class="value">-</div>
-                </div>
-                <div class="dashboard-card">
-                    <h3>상태 유형 수</h3>
-                    <div class="value">-</div>
                 </div>
             </div>
             <div class="chart-container">
@@ -444,6 +426,24 @@
                 <div class="chart-card">
                     <h3>딜 오너별 상태 현황</h3>
                     <canvas id="dealsChart"></canvas>
+                </div>
+            </div>
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <h4>총 딜 수</h4>
+                    <p id="totalDeals">-</p>
+                </div>
+                <div class="stat-card">
+                    <h4>딜 오너 수</h4>
+                    <p id="totalOwners">-</p>
+                </div>
+                <div class="stat-card">
+                    <h4>파이프라인 수</h4>
+                    <p id="totalPipelines">-</p>
+                </div>
+                <div class="stat-card">
+                    <h4>상태 유형 수</h4>
+                    <p id="totalStatuses">-</p>
                 </div>
             </div>
         </section>
@@ -483,18 +483,22 @@
 
     <script>
         // Supabase 클라이언트 초기화
-        const supabaseUrl = "https://zthihjyrifsbssbsaaky.supabase.co";
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0aGloanlyaWZzYnNzYnNhYWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0Nzc5NzgsImV4cCI6MjA2MDA1Mzk3OH0.27a9HrNmT89ZoRExQUSpMkUNRmnawN1poJnYV0rXTHE";
-        const client = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabase = createClient('https://qgqxqfgjtvzwqhunxcxh.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncXhxZmdqdHZ6d3FodW54Y3hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI4NzIzNTksImV4cCI6MjAxODQ0ODM1OX0.dENHYHZTXb_S_GfyJHGQYgXO8IKGQiB4yXnF0S1CLxg');
 
-        // 딜 데이터 로드 및 차트 표시
-        async function loadDealsAnalytics() {
+        // 데이터 로드 및 차트 업데이트 함수
+        async function loadData() {
             try {
-                const { data: deals, error } = await client
+                const { data: deals, error } = await supabase
                     .from('deals')
-                    .select('deal_owner, deal_pipeline, deal_status');
+                    .select('*');
 
                 if (error) throw error;
+
+                // 대시보드 통계 업데이트
+                document.getElementById('totalDeals').textContent = deals.length;
+                document.getElementById('totalOwners').textContent = new Set(deals.map(deal => deal.deal_owner)).size;
+                document.getElementById('totalPipelines').textContent = new Set(deals.map(deal => deal.deal_pipeline)).size;
+                document.getElementById('totalStatuses').textContent = new Set(deals.map(deal => deal.deal_status)).size;
 
                 // 파이프라인 테이블 업데이트
                 const pipelineTable = document.getElementById('pipelineTable').getElementsByTagName('tbody')[0];
@@ -525,20 +529,27 @@
 
                 // 상태 차트
                 const statusCtx = document.getElementById('dealsChart').getContext('2d');
+                const statusData = {};
+                deals.forEach(deal => {
+                    if (!statusData[deal.deal_status]) {
+                        statusData[deal.deal_status] = 0;
+                    }
+                    statusData[deal.deal_status]++;
+                });
+
                 new Chart(statusCtx, {
-                    type: 'bar',
+                    type: 'doughnut',
                     data: {
-                        labels: Object.keys(ownerStatus),
-                        datasets: Object.keys(ownerStatus[Object.keys(ownerStatus)[0]] || {}).map((status, index) => ({
-                            label: status,
-                            data: Object.keys(ownerStatus).map(owner => ownerStatus[owner][status] || 0),
+                        labels: Object.keys(statusData),
+                        datasets: [{
+                            data: Object.values(statusData),
                             backgroundColor: [
                                 '#272b4c',
                                 '#373d6a',
                                 '#1a1d33',
                                 '#4a5089'
-                            ][index % 4]
-                        }))
+                            ]
+                        }]
                     },
                     options: {
                         responsive: true,
@@ -550,42 +561,12 @@
                             legend: {
                                 position: 'bottom'
                             }
-                        },
-                        scales: {
-                            x: {
-                                stacked: true
-                            },
-                            y: {
-                                stacked: true,
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1
-                                }
-                            }
                         }
                     }
                 });
 
-                // 대시보드 카드 업데이트
-                const totalDeals = deals.length;
-                const uniqueOwners = new Set(deals.map(deal => deal.deal_owner)).size;
-                const activePipelines = new Set(deals.map(deal => deal.deal_pipeline)).size;
-                const activeStatus = new Set(deals.map(deal => deal.deal_status)).size;
-
-                document.querySelector('.dashboard-card:nth-child(1) .value').textContent = totalDeals;
-                document.querySelector('.dashboard-card:nth-child(1) h3').textContent = '총 딜 수';
-                
-                document.querySelector('.dashboard-card:nth-child(2) .value').textContent = uniqueOwners;
-                document.querySelector('.dashboard-card:nth-child(2) h3').textContent = '딜 오너 수';
-                
-                document.querySelector('.dashboard-card:nth-child(3) .value').textContent = activePipelines;
-                document.querySelector('.dashboard-card:nth-child(3) h3').textContent = '파이프라인 수';
-                
-                document.querySelector('.dashboard-card:nth-child(4) .value').textContent = activeStatus;
-                document.querySelector('.dashboard-card:nth-child(4) h3').textContent = '상태 유형 수';
-
             } catch (error) {
-                console.error('Error loading deals data:', error);
+                console.error('Error:', error);
             }
         }
 
@@ -692,7 +673,7 @@
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
             loadExpertise();
-            loadDealsAnalytics();
+            loadData();
         });
     </script>
 </body>
