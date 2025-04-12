@@ -204,8 +204,8 @@
         }
 
         .chart-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 2rem;
             margin-top: 2rem;
         }
@@ -215,6 +215,7 @@
             padding: 1.5rem;
             border-radius: 8px;
             box-shadow: var(--shadow);
+            width: 100%;
         }
 
         .chart-card h3 {
@@ -429,7 +430,7 @@
                     <canvas id="dealsChart"></canvas>
                 </div>
                 <div class="chart-card">
-                    <h3>월별 딜 현황</h3>
+                    <h3>일별 딜 현황</h3>
                     <canvas id="monthlyDealsChart"></canvas>
                 </div>
             </div>
@@ -583,40 +584,40 @@
                     }
                 });
 
-                // 월별 데이터 집계
-                const monthlyData = {};
+                // 일별 데이터 집계
+                const dailyData = {};
                 deals.forEach(deal => {
                     const date = new Date(deal.deal_created_at);
-                    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
                     
-                    if (!monthlyData[monthKey]) {
-                        monthlyData[monthKey] = {
+                    if (!dailyData[dateKey]) {
+                        dailyData[dateKey] = {
                             total: 0,
                             success: 0,
                             rate: 0
                         };
                     }
                     
-                    monthlyData[monthKey].total++;
+                    dailyData[dateKey].total++;
                     if (deal.deal_status === '성공') {
-                        monthlyData[monthKey].success++;
+                        dailyData[dateKey].success++;
                     }
                 });
 
                 // 데이터 정렬
-                const sortedMonths = Object.keys(monthlyData).sort();
+                const sortedDays = Object.keys(dailyData).sort();
                 const chartData = {
-                    labels: sortedMonths,
-                    totalDeals: sortedMonths.map(month => monthlyData[month].total),
-                    successDeals: sortedMonths.map(month => monthlyData[month].success),
-                    rates: sortedMonths.map(month => 
-                        (monthlyData[month].success / monthlyData[month].total * 100) || 0
+                    labels: sortedDays,
+                    totalDeals: sortedDays.map(day => dailyData[day].total),
+                    successDeals: sortedDays.map(day => dailyData[day].success),
+                    rates: sortedDays.map(day => 
+                        (dailyData[day].success / dailyData[day].total * 100) || 0
                     )
                 };
 
-                // 월별 딜 현황 차트
-                const monthlyCtx = document.getElementById('monthlyDealsChart').getContext('2d');
-                new Chart(monthlyCtx, {
+                // 일별 딜 현황 차트
+                const dailyCtx = document.getElementById('monthlyDealsChart').getContext('2d');
+                new Chart(dailyCtx, {
                     type: 'bar',
                     data: {
                         labels: chartData.labels,
@@ -625,13 +626,15 @@
                                 label: '전체 딜 수',
                                 data: chartData.totalDeals,
                                 backgroundColor: '#272b4c',
-                                order: 2
+                                order: 2,
+                                yAxisID: 'y'
                             },
                             {
                                 label: '성공 딜 수',
                                 data: chartData.successDeals,
                                 backgroundColor: '#4a5089',
-                                order: 1
+                                order: 1,
+                                yAxisID: 'y'
                             },
                             {
                                 label: '성공률',
@@ -648,9 +651,16 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
                             y: {
                                 beginAtZero: true,
+                                position: 'left',
                                 title: {
                                     display: true,
                                     text: '딜 수'
@@ -669,7 +679,7 @@
                         plugins: {
                             title: {
                                 display: true,
-                                text: '월별 딜 현황'
+                                text: '일별 딜 현황'
                             },
                             legend: {
                                 position: 'bottom'
