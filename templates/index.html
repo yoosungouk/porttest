@@ -346,8 +346,8 @@
                     <canvas id="projectStatusChart"></canvas>
                 </div>
                 <div class="chart-card">
-                    <h3>기술 스택 분포</h3>
-                    <canvas id="techStackChart"></canvas>
+                    <h3>단계별 정의</h3>
+                    <canvas id="dealsChart"></canvas>
                 </div>
             </div>
         </section>
@@ -387,10 +387,9 @@
 
     <script>
         // Supabase 클라이언트 초기화
-        const { createClient } = supabase;
-        const supabaseClient = createClient(
-            'https://zthihjyrifsbssbsaaky.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0aGloanlyaWZzYnNzYnNhYWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0Nzc5NzgsImV4cCI6MjA2MDA1Mzk3OH0.27a9HrNmT89ZoRExQUSpMkUNRmnawN1poJnYV0rXTHE'
+        const supabase = supabase.createClient(
+            'https://xyzcompany.supabase.co',
+            'public-anon-key'
         );
 
         // 프로젝트 진행 현황 차트
@@ -418,35 +417,64 @@
             }
         });
 
-        // 기술 스택 차트
-        const techStackCtx = document.getElementById('techStackChart').getContext('2d');
-        new Chart(techStackCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Frontend', 'Backend', 'Database', 'DevOps', 'Mobile'],
-                datasets: [{
-                    label: '기술 스택 수',
-                    data: [4, 5, 3, 2, 1],
-                    backgroundColor: '#272b4c'
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
+        // 단계별 정의 차트 데이터 로드 및 표시
+        async function loadDealsChart() {
+            try {
+                const { data: deals, error } = await supabase
+                    .from('deals')
+                    .select('stage, definition');
+
+                if (error) throw error;
+
+                // 데이터 정리
+                const stages = deals.map(deal => deal.stage);
+                const definitions = deals.map(deal => deal.definition);
+
+                // 차트 생성
+                const dealsCtx = document.getElementById('dealsChart').getContext('2d');
+                new Chart(dealsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: stages,
+                        datasets: [{
+                            label: '단계별 정의',
+                            data: definitions.map(() => 1), // 각 단계당 1의 값을 가짐
+                            backgroundColor: '#272b4c'
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return definitions[context.dataIndex];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                display: false
+                            },
+                            y: {
+                                ticks: {
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            }
                         }
                     }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
+                });
+            } catch (error) {
+                console.error('Error loading deals data:', error);
             }
-        });
+        }
 
         // 모달 제어
         function openModal() {
@@ -460,7 +488,7 @@
         // 전문분야 데이터 로드
         async function loadExpertise() {
             try {
-                const { data, error } = await supabaseClient
+                const { data, error } = await supabase
                     .from('expertise')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -508,7 +536,7 @@
             }
 
             try {
-                const { data, error } = await supabaseClient
+                const { data, error } = await supabase
                     .from('expertise')
                     .insert([
                         { 
@@ -551,6 +579,7 @@
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
             loadExpertise();
+            loadDealsChart();
         });
     </script>
 </body>
