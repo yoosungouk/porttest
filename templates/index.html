@@ -204,9 +204,9 @@
         }
 
         .chart-container {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
             margin-top: 2rem;
         }
 
@@ -215,7 +215,12 @@
             padding: 1.5rem;
             border-radius: 8px;
             box-shadow: var(--shadow);
-            width: 100%;
+            height: 400px;
+        }
+
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+            height: 300px;
         }
 
         .chart-card h3 {
@@ -617,72 +622,123 @@
 
                 // 일별 딜 현황 차트
                 const dailyCtx = document.getElementById('monthlyDealsChart').getContext('2d');
+                
+                // 최근 7일 데이터만 표시
+                const last7Days = sortedDays.slice(-7);
+                const last7DaysData = {
+                    labels: last7Days,
+                    totalDeals: last7Days.map(day => dailyData[day].total),
+                    successDeals: last7Days.map(day => dailyData[day].success),
+                    rates: last7Days.map(day => 
+                        (dailyData[day].success / dailyData[day].total * 100) || 0
+                    )
+                };
+
                 new Chart(dailyCtx, {
                     type: 'bar',
                     data: {
-                        labels: chartData.labels,
+                        labels: last7DaysData.labels,
                         datasets: [
                             {
                                 label: '전체 딜 수',
-                                data: chartData.totalDeals,
+                                data: last7DaysData.totalDeals,
                                 backgroundColor: '#272b4c',
                                 order: 2,
-                                yAxisID: 'y'
+                                yAxisID: 'y',
+                                barPercentage: 0.6
                             },
                             {
                                 label: '성공 딜 수',
-                                data: chartData.successDeals,
+                                data: last7DaysData.successDeals,
                                 backgroundColor: '#4a5089',
                                 order: 1,
-                                yAxisID: 'y'
+                                yAxisID: 'y',
+                                barPercentage: 0.6
                             },
                             {
                                 label: '성공률',
-                                data: chartData.rates,
+                                data: last7DaysData.rates,
                                 type: 'line',
                                 borderColor: '#00a3e0',
                                 borderWidth: 2,
                                 fill: false,
-                                tension: 0.4,
+                                tension: 0.1,
                                 yAxisID: 'percentage',
-                                order: 0
+                                order: 0,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
                             }
                         ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 20,
+                                left: 20
+                            }
+                        },
                         scales: {
                             x: {
                                 grid: {
                                     display: false
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
                                 }
                             },
                             y: {
                                 beginAtZero: true,
                                 position: 'left',
+                                grid: {
+                                    borderDash: [2, 4]
+                                },
                                 title: {
                                     display: true,
-                                    text: '딜 수'
+                                    text: '딜 수',
+                                    font: {
+                                        size: 12
+                                    }
                                 }
                             },
                             percentage: {
                                 position: 'right',
                                 beginAtZero: true,
                                 max: 100,
+                                grid: {
+                                    display: false
+                                },
                                 title: {
                                     display: true,
-                                    text: '성공률 (%)'
+                                    text: '성공률 (%)',
+                                    font: {
+                                        size: 12
+                                    }
                                 }
                             }
                         },
                         plugins: {
                             title: {
                                 display: true,
-                                text: '일별 딜 현황'
+                                text: '최근 7일 딜 현황',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                },
+                                padding: {
+                                    bottom: 20
+                                }
                             },
                             legend: {
-                                position: 'bottom'
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
                             }
                         }
                     }
