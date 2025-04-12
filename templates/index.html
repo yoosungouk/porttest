@@ -6,7 +6,7 @@
     <title>유성욱 - IT Professional</title>
     <!-- Spoqa Han Sans Neo 폰트 CDN -->
     <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css'>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -143,6 +143,10 @@
         button:hover {
             background-color: #0056b3;
         }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -192,36 +196,45 @@
             <input type="text" id="value-input" placeholder="설명 (예: Python, Flask)" />
             <button onclick="addExpertise()">추가</button>
         </div>
+        <div id="error-message" class="error-message"></div>
     </div>
 
     <script>
         // Supabase 클라이언트 초기화
-        const supabaseUrl = 'https://zthihjyrifsbssbsaaky.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0aGloanlyaWZzYnNzYnNhYWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTAyMzc5NzAsImV4cCI6MjAyNTgxMzk3MH0.7vJZYqZWUqZwVHVAVGWNE_zzT-nJzJGRj1I0_FvYPYY';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const { createClient } = supabase;
+        const supabaseClient = createClient(
+            'https://zthihjyrifsbssbsaaky.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0aGloanlyaWZzYnNzYnNhYWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTAyMzc5NzAsImV4cCI6MjAyNTgxMzk3MH0.7vJZYqZWUqZwVHVAVGWNE_zzT-nJzJGRj1I0_FvYPYY'
+        );
 
         // 전문분야 데이터 로드
         async function loadExpertise() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('expertise')
                     .select('*')
-                    .order('id', { ascending: true });
+                    .order('created_at', { ascending: false });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Error loading data:', error);
+                    document.getElementById('error-message').textContent = '데이터를 불러오는데 실패했습니다: ' + error.message;
+                    return;
+                }
 
                 const expertiseList = document.getElementById('expertise-list');
                 expertiseList.innerHTML = '';
                 
-                data.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'expertise-item';
-                    div.innerHTML = `<strong>${item.type}:</strong> ${item.value}`;
-                    expertiseList.appendChild(div);
-                });
+                if (data) {
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'expertise-item';
+                        div.innerHTML = `<strong>${item.type}:</strong> ${item.value}`;
+                        expertiseList.appendChild(div);
+                    });
+                }
             } catch (error) {
                 console.error('Error:', error);
-                alert('데이터를 불러오는데 실패했습니다.');
+                document.getElementById('error-message').textContent = '데이터를 불러오는데 실패했습니다: ' + error.message;
             }
         }
 
@@ -229,31 +242,43 @@
         async function addExpertise() {
             const typeInput = document.getElementById('type-input');
             const valueInput = document.getElementById('value-input');
+            const errorMessage = document.getElementById('error-message');
             
             const type = typeInput.value.trim();
             const value = valueInput.value.trim();
             
             if (!type || !value) {
-                alert('분야와 설명을 모두 입력해주세요.');
+                errorMessage.textContent = '분야와 설명을 모두 입력해주세요.';
                 return;
             }
 
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('expertise')
-                    .insert([{ type, value }]);
+                    .insert([
+                        { 
+                            type: type,
+                            value: value
+                        }
+                    ])
+                    .select();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Error inserting data:', error);
+                    errorMessage.textContent = '데이터 추가에 실패했습니다: ' + error.message;
+                    return;
+                }
 
                 // 입력 필드 초기화
                 typeInput.value = '';
                 valueInput.value = '';
+                errorMessage.textContent = '';
 
                 // 데이터 다시 로드
                 loadExpertise();
             } catch (error) {
                 console.error('Error:', error);
-                alert('데이터를 추가하는데 실패했습니다.');
+                errorMessage.textContent = '데이터 추가에 실패했습니다: ' + error.message;
             }
         }
 
