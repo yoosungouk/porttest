@@ -565,39 +565,232 @@
         let originalData = null;
 
         // 데이터 로드 및 초기화
-        fetch('/api/deals')
-            .then(response => response.json())
-            .then(data => {
-                originalData = data;
-                initializeStaffFilter(data);
+        async function initializeData() {
+            try {
+                const { data: deals, error } = await client
+                    .from('deals')
+                    .select('*');
+
+                if (error) throw error;
+
+                originalData = { deals };
+                initializeStaffFilter(originalData);
                 updateCharts('all');
-            });
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
 
         // 기존의 차트 생성 코드를 updateDailyChart 함수로 변경
         function updateDailyChart(data) {
-            // 기존의 일별 차트 로직을 여기로 이동
-            // dailyData 계산 로직...
+            const dailyData = {};
+            data.deals.forEach(deal => {
+                const date = new Date(deal.created_at);
+                const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+                
+                if (!dailyData[dateKey]) {
+                    dailyData[dateKey] = {
+                        total: 0,
+                        success: 0,
+                        rate: 0
+                    };
+                }
+                
+                dailyData[dateKey].total++;
+                if (deal.status === 'success') {
+                    dailyData[dateKey].success++;
+                }
+            });
+
+            // 데이터 정렬
+            const sortedDays = Object.keys(dailyData).sort();
+            
+            // 최근 7일 데이터만 표시
+            const last7Days = sortedDays.slice(-7);
+            const last7DaysData = {
+                labels: last7Days,
+                totalDeals: last7Days.map(day => dailyData[day].total),
+                successDeals: last7Days.map(day => dailyData[day].success),
+                rates: last7Days.map(day => 
+                    (dailyData[day].success / dailyData[day].total * 100) || 0
+                )
+            };
             
             if (monthlyDealsChart) {
                 monthlyDealsChart.destroy();
             }
 
             const dailyCtx = document.getElementById('monthlyDealsChart').getContext('2d');
-            // 차트 생성 로직...
             monthlyDealsChart = new Chart(dailyCtx, {
-                // 기존 차트 설정...
+                type: 'bar',
+                data: {
+                    labels: last7DaysData.labels,
+                    datasets: [
+                        {
+                            label: '전체 딜 수',
+                            data: last7DaysData.totalDeals,
+                            backgroundColor: '#272b4c',
+                            order: 2,
+                            yAxisID: 'y',
+                            barPercentage: 0.6
+                        },
+                        {
+                            label: '성공 딜 수',
+                            data: last7DaysData.successDeals,
+                            backgroundColor: '#4a5089',
+                            order: 1,
+                            yAxisID: 'y',
+                            barPercentage: 0.6
+                        },
+                        {
+                            label: '성공률',
+                            data: last7DaysData.rates,
+                            type: 'line',
+                            borderColor: '#00a3e0',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.1,
+                            yAxisID: 'percentage',
+                            order: 0,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 20,
+                            right: 20,
+                            bottom: 20,
+                            left: 20
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            grid: {
+                                borderDash: [2, 4]
+                            },
+                            title: {
+                                display: true,
+                                text: '딜 수',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        percentage: {
+                            position: 'right',
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: '성공률 (%)',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '최근 7일 딜 현황',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: {
+                                bottom: 20
+                            }
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    }
+                }
             });
         }
 
         function updateCategoryChart(data) {
+            const categoryData = {};
+            data.deals.forEach(deal => {
+                if (!categoryData[deal.category]) {
+                    categoryData[deal.category] = 0;
+                }
+                categoryData[deal.category]++;
+            });
+            
             if (categoryChart) {
                 categoryChart.destroy();
             }
 
             const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-            // 카테고리 차트 생성 로직...
             categoryChart = new Chart(categoryCtx, {
-                // 기존 차트 설정...
+                type: 'bar',
+                data: {
+                    labels: Object.keys(categoryData),
+                    datasets: [{
+                        label: '카테고리별 딜 수',
+                        data: Object.values(categoryData),
+                        backgroundColor: '#272b4c',
+                        borderColor: '#4a5089',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                borderDash: [2, 4]
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '카테고리별 딜 현황',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: {
+                                bottom: 20
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
             });
         }
 
@@ -730,161 +923,6 @@
                     }
                 });
 
-                // 일별 데이터 집계
-                const dailyData = {};
-                deals.forEach(deal => {
-                    const date = new Date(deal.deal_created_at);
-                    const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
-                    
-                    if (!dailyData[dateKey]) {
-                        dailyData[dateKey] = {
-                            total: 0,
-                            success: 0,
-                            rate: 0
-                        };
-                    }
-                    
-                    dailyData[dateKey].total++;
-                    if (deal.deal_status === '성공') {
-                        dailyData[dateKey].success++;
-                    }
-                });
-
-                // 데이터 정렬
-                const sortedDays = Object.keys(dailyData).sort();
-                const chartData = {
-                    labels: sortedDays,
-                    totalDeals: sortedDays.map(day => dailyData[day].total),
-                    successDeals: sortedDays.map(day => dailyData[day].success),
-                    rates: sortedDays.map(day => 
-                        (dailyData[day].success / dailyData[day].total * 100) || 0
-                    )
-                };
-
-                // 일별 딜 현황 차트
-                const dailyCtx = document.getElementById('monthlyDealsChart').getContext('2d');
-                
-                // 최근 7일 데이터만 표시
-                const last7Days = sortedDays.slice(-7);
-                const last7DaysData = {
-                    labels: last7Days,
-                    totalDeals: last7Days.map(day => dailyData[day].total),
-                    successDeals: last7Days.map(day => dailyData[day].success),
-                    rates: last7Days.map(day => 
-                        (dailyData[day].success / dailyData[day].total * 100) || 0
-                    )
-                };
-
-                new Chart(dailyCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: last7DaysData.labels,
-                        datasets: [
-                            {
-                                label: '전체 딜 수',
-                                data: last7DaysData.totalDeals,
-                                backgroundColor: '#272b4c',
-                                order: 2,
-                                yAxisID: 'y',
-                                barPercentage: 0.6
-                            },
-                            {
-                                label: '성공 딜 수',
-                                data: last7DaysData.successDeals,
-                                backgroundColor: '#4a5089',
-                                order: 1,
-                                yAxisID: 'y',
-                                barPercentage: 0.6
-                            },
-                            {
-                                label: '성공률',
-                                data: last7DaysData.rates,
-                                type: 'line',
-                                borderColor: '#00a3e0',
-                                borderWidth: 2,
-                                fill: false,
-                                tension: 0.1,
-                                yAxisID: 'percentage',
-                                order: 0,
-                                pointRadius: 4,
-                                pointHoverRadius: 6
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        layout: {
-                            padding: {
-                                top: 20,
-                                right: 20,
-                                bottom: 20,
-                                left: 20
-                            }
-                        },
-                        scales: {
-                            x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    maxRotation: 45,
-                                    minRotation: 45
-                                }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                position: 'left',
-                                grid: {
-                                    borderDash: [2, 4]
-                                },
-                                title: {
-                                    display: true,
-                                    text: '딜 수',
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            },
-                            percentage: {
-                                position: 'right',
-                                beginAtZero: true,
-                                max: 100,
-                                grid: {
-                                    display: false
-                                },
-                                title: {
-                                    display: true,
-                                    text: '성공률 (%)',
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            }
-                        },
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: '최근 7일 딜 현황',
-                                font: {
-                                    size: 16,
-                                    weight: 'bold'
-                                },
-                                padding: {
-                                    bottom: 20
-                                }
-                            },
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 20
-                                }
-                            }
-                        }
-                    }
-                });
-
             } catch (error) {
                 console.error('Error:', error);
             }
@@ -993,7 +1031,7 @@
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
             loadExpertise();
-            loadData();
+            initializeData();
         });
     </script>
 </body>
