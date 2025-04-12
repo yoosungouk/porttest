@@ -6,7 +6,6 @@
     <title>유성욱 - IT Professional</title>
     <!-- Spoqa Han Sans Neo 폰트 CDN -->
     <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css'>
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -333,6 +332,39 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* 테이블 스타일 추가 */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--background-white);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .data-table th {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: var(--background-light);
+        }
+
+        .data-table tr:hover {
+            background-color: rgba(39, 43, 76, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -393,8 +425,21 @@
             </div>
             <div class="chart-container">
                 <div class="chart-card">
-                    <h3>딜 오너별 파이프라인 현황</h3>
-                    <canvas id="projectStatusChart"></canvas>
+                    <h3>담당자별 단계 현황</h3>
+                    <div class="table-responsive">
+                        <table id="pipelineTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>담당자</th>
+                                    <th>리드</th>
+                                    <th>상담</th>
+                                    <th>계약</th>
+                                    <th>완료</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
                 <div class="chart-card">
                     <h3>딜 오너별 상태 현황</h3>
@@ -451,71 +496,31 @@
 
                 if (error) throw error;
 
-                // 딜 오너별 파이프라인 분석
-                const ownerPipelines = {};
-                const ownerStatus = {};
-                
-                deals.forEach(deal => {
-                    // 파이프라인 데이터 집계
-                    if (!ownerPipelines[deal.deal_owner]) {
-                        ownerPipelines[deal.deal_owner] = {};
-                    }
-                    if (!ownerPipelines[deal.deal_owner][deal.deal_pipeline]) {
-                        ownerPipelines[deal.deal_owner][deal.deal_pipeline] = 0;
-                    }
-                    ownerPipelines[deal.deal_owner][deal.deal_pipeline]++;
+                // 파이프라인 테이블 업데이트
+                const pipelineTable = document.getElementById('pipelineTable').getElementsByTagName('tbody')[0];
+                pipelineTable.innerHTML = '';
 
-                    // 상태 데이터 집계
-                    if (!ownerStatus[deal.deal_owner]) {
-                        ownerStatus[deal.deal_owner] = {};
-                    }
-                    if (!ownerStatus[deal.deal_owner][deal.deal_status]) {
-                        ownerStatus[deal.deal_owner][deal.deal_status] = 0;
-                    }
-                    ownerStatus[deal.deal_owner][deal.deal_status]++;
-                });
+                // 모든 담당자와 파이프라인 단계 가져오기
+                const allOwners = Array.from(new Set(deals.map(deal => deal.deal_owner))).sort();
+                const pipelineStages = ['리드', '상담', '계약', '완료'];
 
-                // 파이프라인 차트
-                const pipelineCtx = document.getElementById('projectStatusChart').getContext('2d');
-                new Chart(pipelineCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(ownerPipelines),
-                        datasets: Object.keys(ownerPipelines[Object.keys(ownerPipelines)[0]] || {}).map((pipeline, index) => ({
-                            label: pipeline,
-                            data: Object.keys(ownerPipelines).map(owner => ownerPipelines[owner][pipeline] || 0),
-                            backgroundColor: [
-                                '#272b4c',
-                                '#373d6a',
-                                '#1a1d33',
-                                '#4a5089'
-                            ][index % 4]
-                        }))
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: '딜 오너별 파이프라인 현황'
-                            },
-                            legend: {
-                                position: 'bottom'
-                            }
-                        },
-                        scales: {
-                            x: {
-                                stacked: true
-                            },
-                            y: {
-                                stacked: true,
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1
-                                }
-                            }
-                        }
-                    }
+                // 각 담당자별 행 생성
+                allOwners.forEach(owner => {
+                    const row = pipelineTable.insertRow();
+                    
+                    // 담당자 이름 셀
+                    const ownerCell = row.insertCell(0);
+                    ownerCell.textContent = owner;
+
+                    // 각 파이프라인 단계별 건수 셀
+                    pipelineStages.forEach(stage => {
+                        const stageCell = row.insertCell();
+                        const count = deals.filter(deal => 
+                            deal.deal_owner === owner && 
+                            deal.deal_pipeline === stage
+                        ).length;
+                        stageCell.textContent = count;
+                    });
                 });
 
                 // 상태 차트
