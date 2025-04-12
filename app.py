@@ -1,31 +1,17 @@
 from flask import Flask, render_template, request, jsonify
 import os
-import psycopg2
+from supabase import create_client, Client
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
 
-# 데이터베이스 연결 함수
-def get_db_connection():
-    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
-    return conn
-
-# 전문분야 테이블 생성 함수
-def init_db():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS expertise (
-            id SERIAL PRIMARY KEY,
-            type VARCHAR(50) NOT NULL,
-            value TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    cur.close()
-    conn.close()
+# Supabase 클라이언트 초기화
+supabase: Client = create_client(
+    os.getenv('SUPABASE_URL'),
+    os.getenv('SUPABASE_KEY')
+)
 
 @app.route('/')
 def index():
@@ -33,35 +19,23 @@ def index():
 
 @app.route('/api/expertise', methods=['GET'])
 def get_expertise():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT type, value FROM expertise')
-    expertise = cur.fetchall()
-    cur.close()
-    conn.close()
-    
-    expertise_dict = {item[0]: item[1] for item in expertise}
+    response = supabase.table('expertise').select('*').execute()
+    expertise = response.data
+    expertise_dict = {item['type']: item['value'] for item in expertise}
     return jsonify(expertise_dict)
 
 @app.route('/api/expertise', methods=['POST'])
 def add_expertise():
     data = request.json
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
     # 기존 데이터 삭제
-    cur.execute('DELETE FROM expertise')
-    
+    supabase.table('expertise').delete().execute()
     # 새로운 데이터 추가
     for key, value in data.items():
-        cur.execute('INSERT INTO expertise (type, value) VALUES (%s, %s)',
-                   (key, value))
-    
-    conn.commit()
-    cur.close()
-    conn.close()
+        supabase.table('expertise').insert({
+            'type': key,
+            'value': value
+        }).execute()
     return jsonify({'status': 'success'})
 
 if __name__ == '__main__':
-    init_db()
     app.run() 
