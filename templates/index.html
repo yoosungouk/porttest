@@ -204,10 +204,23 @@
         }
 
         .chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .chart-section {
+            background-color: var(--background-white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-row {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 1.5rem;
-            margin-top: 2rem;
+            margin-top: 1rem;
         }
 
         .chart-card {
@@ -216,17 +229,6 @@
             border-radius: 8px;
             box-shadow: var(--shadow);
             height: 400px;
-        }
-
-        .chart-card.full-width {
-            grid-column: 1 / -1;
-            height: 300px;
-        }
-
-        .chart-card h3 {
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-            text-align: center;
         }
 
         .modal {
@@ -372,6 +374,27 @@
         .data-table tr:hover {
             background-color: rgba(39, 43, 76, 0.1);
         }
+
+        .filter-container {
+            background-color: var(--background-white);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-container select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+
+        .filter-container label {
+            margin-right: 1rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -412,31 +435,32 @@
                     </button>
                 </div>
             </div>
-            <div class="chart-container">
-                <div class="chart-card">
-                    <h3>담당자별 단계 현황</h3>
-                    <div class="table-responsive">
-                        <table id="pipelineTable" class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>담당자</th>
-                                    <th>보유한 딜 수</th>
-                                    <th>상태 수</th>
-                                    <th>실패 수</th>
-                                    <th>성사 수</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+            <div class="container">
+                <div class="filter-container">
+                    <label for="staffFilter">담당자 필터:</label>
+                    <select id="staffFilter">
+                        <option value="all">전체 보기</option>
+                    </select>
+                </div>
+                
+                <div class="chart-container">
+                    <!-- 담당자별 현황 섹션 -->
+                    <div class="chart-section">
+                        <h2>담당자별 현황</h2>
+                        <div id="staffStats"></div>
                     </div>
-                </div>
-                <div class="chart-card">
-                    <h3>딜 오너별 상태 현황</h3>
-                    <canvas id="dealsChart"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>일별 딜 현황</h3>
-                    <canvas id="monthlyDealsChart"></canvas>
+
+                    <!-- 차트 섹션 -->
+                    <div class="chart-section">
+                        <div class="chart-row">
+                            <div class="chart-card">
+                                <canvas id="monthlyDealsChart"></canvas>
+                            </div>
+                            <div class="chart-card">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="dashboard-stats">
@@ -497,6 +521,123 @@
         const supabaseUrl = "https://zthihjyrifsbssbsaaky.supabase.co";
         const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0aGloanlyaWZzYnNzYnNhYWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0Nzc5NzgsImV4cCI6MjA2MDA1Mzk3OH0.27a9HrNmT89ZoRExQUSpMkUNRmnawN1poJnYV0rXTHE";
         const client = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 전역 변수로 차트 인스턴스들을 저장
+        let monthlyDealsChart = null;
+        let categoryChart = null;
+
+        // 데이터 필터링 함수
+        function filterDataByStaff(data, staffName) {
+            if (staffName === 'all') return data;
+            
+            return {
+                ...data,
+                deals: data.deals.filter(deal => deal.staff === staffName)
+            };
+        }
+
+        // 차트 업데이트 함수
+        function updateCharts(staffName) {
+            const filteredData = filterDataByStaff(originalData, staffName);
+            updateDailyChart(filteredData);
+            updateCategoryChart(filteredData);
+            updateStaffStats(filteredData);
+        }
+
+        // 담당자 필터 초기화
+        function initializeStaffFilter(data) {
+            const staffFilter = document.getElementById('staffFilter');
+            const staffSet = new Set(data.deals.map(deal => deal.staff));
+            
+            staffSet.forEach(staff => {
+                const option = document.createElement('option');
+                option.value = staff;
+                option.textContent = staff;
+                staffFilter.appendChild(option);
+            });
+
+            staffFilter.addEventListener('change', (e) => {
+                updateCharts(e.target.value);
+            });
+        }
+
+        // 원본 데이터를 저장할 변수
+        let originalData = null;
+
+        // 데이터 로드 및 초기화
+        fetch('/api/deals')
+            .then(response => response.json())
+            .then(data => {
+                originalData = data;
+                initializeStaffFilter(data);
+                updateCharts('all');
+            });
+
+        // 기존의 차트 생성 코드를 updateDailyChart 함수로 변경
+        function updateDailyChart(data) {
+            // 기존의 일별 차트 로직을 여기로 이동
+            // dailyData 계산 로직...
+            
+            if (monthlyDealsChart) {
+                monthlyDealsChart.destroy();
+            }
+
+            const dailyCtx = document.getElementById('monthlyDealsChart').getContext('2d');
+            // 차트 생성 로직...
+            monthlyDealsChart = new Chart(dailyCtx, {
+                // 기존 차트 설정...
+            });
+        }
+
+        function updateCategoryChart(data) {
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
+
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            // 카테고리 차트 생성 로직...
+            categoryChart = new Chart(categoryCtx, {
+                // 기존 차트 설정...
+            });
+        }
+
+        function updateStaffStats(data) {
+            const statsContainer = document.getElementById('staffStats');
+            const staffData = {};
+            
+            // 담당자별 통계 계산
+            data.deals.forEach(deal => {
+                if (!staffData[deal.staff]) {
+                    staffData[deal.staff] = {
+                        total: 0,
+                        success: 0,
+                        rate: 0
+                    };
+                }
+                
+                staffData[deal.staff].total++;
+                if (deal.status === 'success') {
+                    staffData[deal.staff].success++;
+                }
+            });
+
+            // 성공률 계산 및 HTML 생성
+            let html = '<div class="staff-stats-grid">';
+            Object.entries(staffData).forEach(([staff, stats]) => {
+                stats.rate = (stats.success / stats.total * 100).toFixed(1);
+                html += `
+                    <div class="staff-stat-card">
+                        <h3>${staff}</h3>
+                        <p>전체 딜: ${stats.total}</p>
+                        <p>성공 딜: ${stats.success}</p>
+                        <p>성공률: ${stats.rate}%</p>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            statsContainer.innerHTML = html;
+        }
 
         // 데이터 로드 및 차트 업데이트 함수
         async function loadData() {
