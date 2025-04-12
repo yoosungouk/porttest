@@ -6,7 +6,8 @@
     <title>유성욱 - IT Professional</title>
     <!-- Spoqa Han Sans Neo 폰트 CDN -->
     <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css'>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Font Awesome -->
@@ -483,8 +484,8 @@
 
     <script>
         // Supabase 클라이언트 초기화
-        const supabaseUrl = "https://qgqxqfgjtvzwqhunxcxh.supabase.co";
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncXhxZmdqdHZ6d3FodW54Y3hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI4NzIzNTksImV4cCI6MjAxODQ0ODM1OX0.dENHYHZTXb_S_GfyJHGQYgXO8IKGQiB4yXnF0S1CLxg";
+        const supabaseUrl = "https://slguorfltrdby.supabase.co";
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsZ3VvcmZsdHJkYnkiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwNDQ3Nzk3OCwiZXhwIjoyMDIwMDUzOTc4fQ.27a9HrNmT89ZoRExQUSpMkUNRmnawN1poJnYV0rXTHE";
         const client = supabase.createClient(supabaseUrl, supabaseKey);
 
         // 데이터 로드 및 차트 업데이트 함수
