@@ -324,29 +324,29 @@
             </div>
             <div class="dashboard-grid">
                 <div class="dashboard-card">
-                    <h3>총 프로젝트</h3>
+                    <h3>총 딜 수</h3>
                     <div class="value">12</div>
                 </div>
                 <div class="dashboard-card">
-                    <h3>완료된 프로젝트</h3>
+                    <h3>딜 오너 수</h3>
                     <div class="value">8</div>
                 </div>
                 <div class="dashboard-card">
-                    <h3>진행 중인 프로젝트</h3>
+                    <h3>파이프라인 수</h3>
                     <div class="value">4</div>
                 </div>
                 <div class="dashboard-card">
-                    <h3>기술 스택</h3>
+                    <h3>상태 유형 수</h3>
                     <div class="value">15</div>
                 </div>
             </div>
             <div class="chart-container">
                 <div class="chart-card">
-                    <h3>프로젝트 진행 현황</h3>
+                    <h3>딜 오너별 파이프라인 현황</h3>
                     <canvas id="projectStatusChart"></canvas>
                 </div>
                 <div class="chart-card">
-                    <h3>단계별 정의</h3>
+                    <h3>딜 오너별 상태 현황</h3>
                     <canvas id="dealsChart"></canvas>
                 </div>
             </div>
@@ -388,89 +388,147 @@
     <script>
         // Supabase 클라이언트 초기화
         const supabase = supabase.createClient(
-            'https://xyzcompany.supabase.co',
-            'public-anon-key'
+            'https://zthihjyrifsbssbsaaky.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0aGloanlyaWZzYnNzYnNhYWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0Nzc5NzgsImV4cCI6MjA2MDA1Mzk3OH0.27a9HrNmT89ZoRExQUSpMkUNRmnawN1poJnYV0rXTHE'
         );
 
-        // 프로젝트 진행 현황 차트
-        const projectStatusCtx = document.getElementById('projectStatusChart').getContext('2d');
-        new Chart(projectStatusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['완료', '진행 중', '계획 중'],
-                datasets: [{
-                    data: [8, 4, 4],
-                    backgroundColor: [
-                        '#272b4c',
-                        '#373d6a',
-                        '#1a1d33'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-
-        // 단계별 정의 차트 데이터 로드 및 표시
-        async function loadDealsChart() {
+        // 딜 데이터 로드 및 차트 표시
+        async function loadDealsAnalytics() {
             try {
                 const { data: deals, error } = await supabase
                     .from('deals')
-                    .select('stage, definition');
+                    .select('deal_owner, deal_pipeline, deal_status');
 
                 if (error) throw error;
 
-                // 데이터 정리
-                const stages = deals.map(deal => deal.stage);
-                const definitions = deals.map(deal => deal.definition);
+                // 딜 오너별 파이프라인 분석
+                const ownerPipelines = {};
+                const ownerStatus = {};
+                
+                deals.forEach(deal => {
+                    // 파이프라인 데이터 집계
+                    if (!ownerPipelines[deal.deal_owner]) {
+                        ownerPipelines[deal.deal_owner] = {};
+                    }
+                    if (!ownerPipelines[deal.deal_owner][deal.deal_pipeline]) {
+                        ownerPipelines[deal.deal_owner][deal.deal_pipeline] = 0;
+                    }
+                    ownerPipelines[deal.deal_owner][deal.deal_pipeline]++;
 
-                // 차트 생성
-                const dealsCtx = document.getElementById('dealsChart').getContext('2d');
-                new Chart(dealsCtx, {
+                    // 상태 데이터 집계
+                    if (!ownerStatus[deal.deal_owner]) {
+                        ownerStatus[deal.deal_owner] = {};
+                    }
+                    if (!ownerStatus[deal.deal_owner][deal.deal_status]) {
+                        ownerStatus[deal.deal_owner][deal.deal_status] = 0;
+                    }
+                    ownerStatus[deal.deal_owner][deal.deal_status]++;
+                });
+
+                // 파이프라인 차트
+                const pipelineCtx = document.getElementById('projectStatusChart').getContext('2d');
+                new Chart(pipelineCtx, {
                     type: 'bar',
                     data: {
-                        labels: stages,
-                        datasets: [{
-                            label: '단계별 정의',
-                            data: definitions.map(() => 1), // 각 단계당 1의 값을 가짐
-                            backgroundColor: '#272b4c'
-                        }]
+                        labels: Object.keys(ownerPipelines),
+                        datasets: Object.keys(ownerPipelines[Object.keys(ownerPipelines)[0]] || {}).map((pipeline, index) => ({
+                            label: pipeline,
+                            data: Object.keys(ownerPipelines).map(owner => ownerPipelines[owner][pipeline] || 0),
+                            backgroundColor: [
+                                '#272b4c',
+                                '#373d6a',
+                                '#1a1d33',
+                                '#4a5089'
+                            ][index % 4]
+                        }))
                     },
                     options: {
-                        indexAxis: 'y',
                         responsive: true,
                         plugins: {
-                            legend: {
-                                display: false
+                            title: {
+                                display: true,
+                                text: '딜 오너별 파이프라인 현황'
                             },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return definitions[context.dataIndex];
-                                    }
-                                }
+                            legend: {
+                                position: 'bottom'
                             }
                         },
                         scales: {
                             x: {
-                                display: false
+                                stacked: true
                             },
                             y: {
+                                stacked: true,
+                                beginAtZero: true,
                                 ticks: {
-                                    font: {
-                                        size: 14
-                                    }
+                                    stepSize: 1
                                 }
                             }
                         }
                     }
                 });
+
+                // 상태 차트
+                const statusCtx = document.getElementById('dealsChart').getContext('2d');
+                new Chart(statusCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(ownerStatus),
+                        datasets: Object.keys(ownerStatus[Object.keys(ownerStatus)[0]] || {}).map((status, index) => ({
+                            label: status,
+                            data: Object.keys(ownerStatus).map(owner => ownerStatus[owner][status] || 0),
+                            backgroundColor: [
+                                '#272b4c',
+                                '#373d6a',
+                                '#1a1d33',
+                                '#4a5089'
+                            ][index % 4]
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '딜 오너별 상태 현황'
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // 대시보드 카드 업데이트
+                const totalDeals = deals.length;
+                const uniqueOwners = new Set(deals.map(deal => deal.deal_owner)).size;
+                const activePipelines = new Set(deals.map(deal => deal.deal_pipeline)).size;
+                const activeStatus = new Set(deals.map(deal => deal.deal_status)).size;
+
+                document.querySelector('.dashboard-card:nth-child(1) .value').textContent = totalDeals;
+                document.querySelector('.dashboard-card:nth-child(1) h3').textContent = '총 딜 수';
+                
+                document.querySelector('.dashboard-card:nth-child(2) .value').textContent = uniqueOwners;
+                document.querySelector('.dashboard-card:nth-child(2) h3').textContent = '딜 오너 수';
+                
+                document.querySelector('.dashboard-card:nth-child(3) .value').textContent = activePipelines;
+                document.querySelector('.dashboard-card:nth-child(3) h3').textContent = '파이프라인 수';
+                
+                document.querySelector('.dashboard-card:nth-child(4) .value').textContent = activeStatus;
+                document.querySelector('.dashboard-card:nth-child(4) h3').textContent = '상태 유형 수';
+
             } catch (error) {
                 console.error('Error loading deals data:', error);
             }
@@ -579,7 +637,7 @@
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
             loadExpertise();
-            loadDealsChart();
+            loadDealsAnalytics();
         });
     </script>
 </body>
