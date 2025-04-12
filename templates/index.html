@@ -428,6 +428,10 @@
                     <h3>딜 오너별 상태 현황</h3>
                     <canvas id="dealsChart"></canvas>
                 </div>
+                <div class="chart-card">
+                    <h3>월별 딜 현황</h3>
+                    <canvas id="monthlyDealsChart"></canvas>
+                </div>
             </div>
             <div class="dashboard-stats">
                 <div class="stat-card">
@@ -571,6 +575,101 @@
                             title: {
                                 display: true,
                                 text: '딜 오너별 상태 현황'
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+
+                // 월별 데이터 집계
+                const monthlyData = {};
+                deals.forEach(deal => {
+                    const date = new Date(deal.deal_created_at);
+                    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    
+                    if (!monthlyData[monthKey]) {
+                        monthlyData[monthKey] = {
+                            total: 0,
+                            success: 0,
+                            rate: 0
+                        };
+                    }
+                    
+                    monthlyData[monthKey].total++;
+                    if (deal.deal_status === '성공') {
+                        monthlyData[monthKey].success++;
+                    }
+                });
+
+                // 데이터 정렬
+                const sortedMonths = Object.keys(monthlyData).sort();
+                const chartData = {
+                    labels: sortedMonths,
+                    totalDeals: sortedMonths.map(month => monthlyData[month].total),
+                    successDeals: sortedMonths.map(month => monthlyData[month].success),
+                    rates: sortedMonths.map(month => 
+                        (monthlyData[month].success / monthlyData[month].total * 100) || 0
+                    )
+                };
+
+                // 월별 딜 현황 차트
+                const monthlyCtx = document.getElementById('monthlyDealsChart').getContext('2d');
+                new Chart(monthlyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [
+                            {
+                                label: '전체 딜 수',
+                                data: chartData.totalDeals,
+                                backgroundColor: '#272b4c',
+                                order: 2
+                            },
+                            {
+                                label: '성공 딜 수',
+                                data: chartData.successDeals,
+                                backgroundColor: '#4a5089',
+                                order: 1
+                            },
+                            {
+                                label: '성공률',
+                                data: chartData.rates,
+                                type: 'line',
+                                borderColor: '#00a3e0',
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.4,
+                                yAxisID: 'percentage',
+                                order: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '딜 수'
+                                }
+                            },
+                            percentage: {
+                                position: 'right',
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: '성공률 (%)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '월별 딜 현황'
                             },
                             legend: {
                                 position: 'bottom'
