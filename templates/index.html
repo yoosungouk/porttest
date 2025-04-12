@@ -343,11 +343,11 @@
             <div class="chart-container">
                 <div class="chart-card">
                     <h3>프로젝트 진행 현황</h3>
-                    <canvas id="projectChart"></canvas>
+                    <canvas id="projectStatusChart"></canvas>
                 </div>
                 <div class="chart-card">
                     <h3>기술 스택 분포</h3>
-                    <canvas id="techChart"></canvas>
+                    <canvas id="techStackChart"></canvas>
                 </div>
             </div>
         </section>
@@ -393,63 +393,60 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0aGloanlyaWZzYnNzYnNhYWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0Nzc5NzgsImV4cCI6MjA2MDA1Mzk3OH0.27a9HrNmT89ZoRExQUSpMkUNRmnawN1poJnYV0rXTHE'
         );
 
-        // 차트 초기화
-        function initializeCharts() {
-            // 프로젝트 진행 현황 차트
-            const projectCtx = document.getElementById('projectChart').getContext('2d');
-            new Chart(projectCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['완료', '진행 중', '계획 중'],
-                    datasets: [{
-                        data: [8, 4, 3],
-                        backgroundColor: [
-                            '#272b4c',
-                            '#373d6a',
-                            '#1a1d33'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
+        // 프로젝트 진행 현황 차트
+        const projectStatusCtx = document.getElementById('projectStatusChart').getContext('2d');
+        new Chart(projectStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['완료', '진행 중', '계획 중'],
+                datasets: [{
+                    data: [8, 4, 4],
+                    backgroundColor: [
+                        '#272b4c',
+                        '#373d6a',
+                        '#1a1d33'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
                     }
                 }
-            });
+            }
+        });
 
-            // 기술 스택 분포 차트
-            const techCtx = document.getElementById('techChart').getContext('2d');
-            new Chart(techCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Frontend', 'Backend', 'Database', 'DevOps', 'Mobile'],
-                    datasets: [{
-                        label: '기술 스택 수',
-                        data: [4, 5, 3, 2, 1],
-                        backgroundColor: '#272b4c'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
+        // 기술 스택 차트
+        const techStackCtx = document.getElementById('techStackChart').getContext('2d');
+        new Chart(techStackCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Frontend', 'Backend', 'Database', 'DevOps', 'Mobile'],
+                datasets: [{
+                    label: '기술 스택 수',
+                    data: [4, 5, 3, 2, 1],
+                    backgroundColor: '#272b4c'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
                         }
                     }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
                 }
-            });
-        }
+            }
+        });
 
         // 모달 제어
         function openModal() {
@@ -554,7 +551,6 @@
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
             loadExpertise();
-            initializeCharts();
         });
     </script>
 </body>
