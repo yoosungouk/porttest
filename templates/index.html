@@ -483,12 +483,14 @@
 
     <script>
         // Supabase 클라이언트 초기화
-        const supabase = createClient('https://qgqxqfgjtvzwqhunxcxh.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncXhxZmdqdHZ6d3FodW54Y3hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI4NzIzNTksImV4cCI6MjAxODQ0ODM1OX0.dENHYHZTXb_S_GfyJHGQYgXO8IKGQiB4yXnF0S1CLxg');
+        const supabaseUrl = "https://qgqxqfgjtvzwqhunxcxh.supabase.co";
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFncXhxZmdqdHZ6d3FodW54Y3hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI4NzIzNTksImV4cCI6MjAxODQ0ODM1OX0.dENHYHZTXb_S_GfyJHGQYgXO8IKGQiB4yXnF0S1CLxg";
+        const client = supabase.createClient(supabaseUrl, supabaseKey);
 
         // 데이터 로드 및 차트 업데이트 함수
         async function loadData() {
             try {
-                const { data: deals, error } = await supabase
+                const { data: deals, error } = await client
                     .from('deals')
                     .select('*');
 
