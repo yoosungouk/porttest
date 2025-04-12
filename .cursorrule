@@ -1,0 +1,24 @@
+{
+  "rules": [
+    {
+      "when": "mcp.git_commit",
+      "then": "auto_approve"
+    },
+    {
+      "when": "mcp.git_checkout",
+      "then": "auto_approve"
+    },
+    {
+      "when": "mcp.git_create_branch",
+      "then": "auto_approve"
+    },
+    {
+      "when": "mcp.git_diff_unstaged",
+      "then": "auto_approve"
+    },
+    {
+      "when": "mcp.git_status",
+      "then": "auto_approve"
+    }
+  ]
+} 

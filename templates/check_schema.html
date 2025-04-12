@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script>
+        const supabaseClient = supabase.createClient(
+            'https://zthihjyrifsbssbsaaky.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0aGloanlyaWZzYnNzYnNhYWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0Nzc5NzgsImV4cCI6MjA2MDA1Mzk3OH0.27a9HrNmT89ZoRExQUSpMkUNRmnawN1poJnYV0rXTHE'
+        );
+
+        async function checkSchema() {
+            const { data, error } = await supabaseClient
+                .from('deals')
+                .select('*')
+                .limit(1);
+
+            if (error) {
+                console.error('Error:', error);
+                return;
+            }
+
+            if (data && data.length > 0) {
+                console.log('Table structure:', Object.keys(data[0]));
+                console.log('Sample data:', data[0]);
+            }
+        }
+
+        checkSchema();
+    </script>
+</head>
+<body>
+    <p>Check console for table structure</p>
+</body>
+</html> 
