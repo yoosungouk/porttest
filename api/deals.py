@@ -17,63 +17,68 @@ def handle_request(request):
             deals = [
                 {
                     "id": 1,
-                    "name": "Enterprise SaaS Deal",
-                    "created_at": "2024-04-01",
-                    "staff": "김영호",
-                    "status": "progress",
+                    "deal_owner": "김영호",
+                    "deal_status": "진행중",
+                    "deal_created_at": "2024-04-01",
                     "category": "SaaS"
                 },
                 {
                     "id": 2,
-                    "name": "SMB Cloud Migration",
-                    "created_at": "2024-04-02",
-                    "staff": "박지연",
-                    "status": "success",
+                    "deal_owner": "박지연",
+                    "deal_status": "성공",
+                    "deal_created_at": "2024-04-02",
                     "category": "Cloud"
                 },
                 {
                     "id": 3,
-                    "name": "Healthcare AI Solution",
-                    "created_at": "2024-04-03",
-                    "staff": "김영호",
-                    "status": "success",
+                    "deal_owner": "김영호",
+                    "deal_status": "성공",
+                    "deal_created_at": "2024-04-03",
                     "category": "AI"
                 },
                 {
                     "id": 4,
-                    "name": "Financial Services Platform",
-                    "created_at": "2024-04-04",
-                    "staff": "이민지",
-                    "status": "progress",
+                    "deal_owner": "이민지",
+                    "deal_status": "진행중",
+                    "deal_created_at": "2024-04-04",
                     "category": "Finance"
                 },
                 {
                     "id": 5,
-                    "name": "Retail Analytics Package",
-                    "created_at": "2024-04-05",
-                    "staff": "박지연",
-                    "status": "failed",
+                    "deal_owner": "박지연",
+                    "deal_status": "실패",
+                    "deal_created_at": "2024-04-05",
                     "category": "Analytics"
                 },
                 {
                     "id": 6,
-                    "name": "Manufacturing IoT Implementation",
-                    "created_at": "2024-04-06",
-                    "staff": "김영호",
-                    "status": "success",
+                    "deal_owner": "김영호",
+                    "deal_status": "성공",
+                    "deal_created_at": "2024-04-06",
                     "category": "IoT"
                 },
                 {
                     "id": 7,
-                    "name": "Education Platform Upgrade",
-                    "created_at": "2024-04-07",
-                    "staff": "이민지",
-                    "status": "progress",
+                    "deal_owner": "이민지",
+                    "deal_status": "진행중",
+                    "deal_created_at": "2024-04-07",
                     "category": "SaaS"
                 }
             ]
         
-        return jsonify({"deals": deals})
+        # 변환된 데이터 구조로 반환
+        formatted_deals = []
+        for deal in deals:
+            formatted_deal = {
+                "id": deal.get("id", 0),
+                "staff": deal.get("deal_owner", ""),
+                "status": deal.get("deal_status", ""),
+                "created_at": deal.get("deal_created_at", ""),
+                "category": deal.get("category", "기타")  # 카테고리 필드가 없으면 '기타'로 설정
+            }
+            formatted_deals.append(formatted_deal)
+        
+        return jsonify({"deals": formatted_deals})
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500 

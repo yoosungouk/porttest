@@ -397,6 +397,55 @@
             margin-right: 1rem;
             font-weight: 500;
         }
+
+        .staff-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .staff-stat-card {
+            background-color: #f9f9fc;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .staff-stat-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-table th {
+            background-color: #f5f5f8;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .data-table tr:hover {
+            background-color: #f9f9fc;
+        }
+        
+        .chart-title {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -449,7 +498,19 @@
                     <!-- 담당자별 현황 섹션 -->
                     <div class="chart-section">
                         <h2>담당자별 현황</h2>
-                        <div id="staffStats"></div>
+                        <div class="table-responsive">
+                            <table id="staffStatsTable" class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>담당자</th>
+                                        <th>리드수</th>
+                                        <th>리드수임 점환율</th>
+                                        <th>수임수</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- 차트 섹션 -->
@@ -540,6 +601,11 @@
 
         // 차트 업데이트 함수
         function updateCharts(staffName) {
+            if (!originalData || !originalData.deals || originalData.deals.length === 0) {
+                console.error('데이터가 없습니다.');
+                return;
+            }
+            
             const filteredData = filterDataByStaff(originalData, staffName);
             updateDailyChart(filteredData);
             updateCategoryChart(filteredData);
@@ -548,35 +614,28 @@
 
         // 담당자 필터 초기화
         function initializeStaffFilter(data) {
-            try {
-                const staffFilter = document.getElementById('staffFilter');
-                
-                // 옵션 초기화
-                staffFilter.innerHTML = '<option value="all">전체 보기</option>';
-                
-                // 사용할 필드 결정
-                const staffField = data.deals.some(deal => deal.staff) ? 'staff' : 'deal_owner';
-                
-                // 담당자 목록 생성
-                const staffSet = new Set(
-                    data.deals
-                        .map(deal => deal[staffField])
-                        .filter(Boolean) // null/undefined 제거
-                );
-                
-                staffSet.forEach(staff => {
+            if (!data || !data.deals || data.deals.length === 0) {
+                console.error('필터 초기화할 데이터가 없습니다.');
+                return;
+            }
+            
+            const staffFilter = document.getElementById('staffFilter');
+            const staffSet = new Set(data.deals.map(deal => deal.staff));
+            
+            staffFilter.innerHTML = '<option value="all">전체 보기</option>';
+            
+            staffSet.forEach(staff => {
+                if (staff) {
                     const option = document.createElement('option');
                     option.value = staff;
                     option.textContent = staff;
                     staffFilter.appendChild(option);
-                });
+                }
+            });
 
-                staffFilter.addEventListener('change', (e) => {
-                    updateCharts(e.target.value);
-                });
-            } catch (error) {
-                console.error('담당자 필터 초기화 중 오류 발생:', error);
-            }
+            staffFilter.addEventListener('change', (e) => {
+                updateCharts(e.target.value);
+            });
         }
 
         // 원본 데이터를 저장할 변수
@@ -585,13 +644,22 @@
         // 데이터 로드 및 초기화
         async function initializeData() {
             try {
-                const { data: deals, error } = await client
-                    .from('deals')
-                    .select('*');
-
-                if (error) throw error;
-
-                originalData = { deals };
+                const response = await fetch('/api/deals');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP 에러! 상태: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data || !data.deals || data.deals.length === 0) {
+                    console.error('API에서 반환된 데이터가 없습니다.');
+                    return;
+                }
+                
+                console.log('로드된 데이터:', data);
+                
+                originalData = data;
                 initializeStaffFilter(originalData);
                 updateCharts('all');
             } catch (error) {
@@ -602,6 +670,25 @@
         // 기존의 차트 생성 코드를 updateDailyChart 함수로 변경
         function updateDailyChart(data) {
             const dailyData = {};
+            
+            // 최근 7일 날짜 생성
+            const today = new Date();
+            const last7Days = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateKey = date.toISOString().split('T')[0];
+                last7Days.push(dateKey);
+                
+                dailyData[dateKey] = {
+                    total: 0,
+                    success: 0,
+                    rate: 0
+                };
+            }
+            
+            // 데이터 집계
             data.deals.forEach(deal => {
                 // 날짜 형식 확인 및 변환
                 let dateKey;
@@ -616,16 +703,21 @@
                             // YYYY-MM-DD 형식인 경우
                             dateKey = dateStr;
                         } else {
-                            // 기타 형식은 기본값 사용
-                            dateKey = '2024-04-01';
+                            // 표시할 7일 범위에 포함되지 않는 날짜는 처리하지 않음
+                            return;
                         }
                     } else {
-                        // 날짜 형식이 아닌 경우 기본값 사용
-                        dateKey = '2024-04-01';
+                        // 날짜 형식이 아닌 경우 처리하지 않음
+                        return;
+                    }
+                    
+                    // 최근 7일에 포함되지 않는 날짜는 처리하지 않음
+                    if (!last7Days.includes(dateKey)) {
+                        return;
                     }
                 } catch (e) {
                     console.error("날짜 변환 오류:", e);
-                    dateKey = '2024-04-01'; // 기본값
+                    return;
                 }
                 
                 if (!dailyData[dateKey]) {
@@ -637,23 +729,23 @@
                 }
                 
                 dailyData[dateKey].total++;
-                if (deal.status === 'success') {
+                if (deal.status === '성공') {
                     dailyData[dateKey].success++;
                 }
             });
-
-            // 데이터 정렬
-            const sortedDays = Object.keys(dailyData).sort();
             
-            // 최근 7일 데이터만 표시 (데이터가 충분한 경우)
-            const last7Days = sortedDays.slice(-Math.min(7, sortedDays.length));
-            const last7DaysData = {
+            // 성공률 계산
+            last7Days.forEach(day => {
+                if (dailyData[day].total > 0) {
+                    dailyData[day].rate = (dailyData[day].success / dailyData[day].total) * 100;
+                }
+            });
+            
+            const chartData = {
                 labels: last7Days,
                 totalDeals: last7Days.map(day => dailyData[day].total),
                 successDeals: last7Days.map(day => dailyData[day].success),
-                rates: last7Days.map(day => 
-                    (dailyData[day].success / dailyData[day].total * 100) || 0
-                )
+                rates: last7Days.map(day => dailyData[day].rate)
             };
             
             if (monthlyDealsChart) {
@@ -664,27 +756,27 @@
             monthlyDealsChart = new Chart(dailyCtx, {
                 type: 'bar',
                 data: {
-                    labels: last7DaysData.labels,
+                    labels: chartData.labels,
                     datasets: [
                         {
-                            label: '전체 딜 수',
-                            data: last7DaysData.totalDeals,
+                            label: '리드수',
+                            data: chartData.totalDeals,
                             backgroundColor: '#272b4c',
                             order: 2,
                             yAxisID: 'y',
                             barPercentage: 0.6
                         },
                         {
-                            label: '성공 딜 수',
-                            data: last7DaysData.successDeals,
+                            label: '수임수',
+                            data: chartData.successDeals,
                             backgroundColor: '#4a5089',
                             order: 1,
                             yAxisID: 'y',
                             barPercentage: 0.6
                         },
                         {
-                            label: '성공률',
-                            data: last7DaysData.rates,
+                            label: '리드수임 점환율',
+                            data: chartData.rates,
                             type: 'line',
                             borderColor: '#00a3e0',
                             borderWidth: 2,
@@ -773,134 +865,125 @@
         }
 
         function updateCategoryChart(data) {
-            try {
-                const categoryData = {};
+            // 카테고리 데이터 존재 여부 확인
+            if (!data.deals || data.deals.length === 0) {
+                console.warn("카테고리 데이터가 없습니다.");
+                return;
+            }
+            
+            // 카테고리 필드가 없는 경우 나머지 필드를 사용하고 "기타"로 표시
+            const hasCategoryField = data.deals.some(deal => deal.category);
+            
+            const categoryData = {};
+            data.deals.forEach(deal => {
+                const category = hasCategoryField ? (deal.category || "기타") : "기타";
                 
-                // 사용할 필드 결정
-                const categoryField = data.deals.some(deal => deal.category) ? 'category' : 'deal_category';
-                
-                data.deals.forEach(deal => {
-                    const category = deal[categoryField];
-                    if (!category) return; // 카테고리가 없으면 건너뜁니다
-                    
-                    if (!categoryData[category]) {
-                        categoryData[category] = 0;
-                    }
-                    categoryData[category]++;
-                });
-                
-                // 데이터가 없을 경우
-                if (Object.keys(categoryData).length === 0) {
-                    console.warn('카테고리 데이터가 없습니다.');
-                    return;
+                if (!categoryData[category]) {
+                    categoryData[category] = 0;
                 }
-                
-                if (categoryChart) {
-                    categoryChart.destroy();
-                }
+                categoryData[category]++;
+            });
+            
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
 
-                const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-                categoryChart = new Chart(categoryCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(categoryData),
-                        datasets: [{
-                            label: '카테고리별 딜 수',
-                            data: Object.values(categoryData),
-                            backgroundColor: '#272b4c',
-                            borderColor: '#4a5089',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    borderDash: [2, 4]
-                                }
-                            },
-                            x: {
-                                grid: {
-                                    display: false
-                                }
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(categoryData),
+                    datasets: [{
+                        label: '카테고리별 딜 수',
+                        data: Object.values(categoryData),
+                        backgroundColor: '#272b4c',
+                        borderColor: '#4a5089',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                borderDash: [2, 4]
                             }
                         },
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: '카테고리별 딜 현황',
-                                font: {
-                                    size: 16,
-                                    weight: 'bold'
-                                },
-                                padding: {
-                                    bottom: 20
-                                }
-                            },
-                            legend: {
+                        x: {
+                            grid: {
                                 display: false
                             }
                         }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '카테고리별 딜 현황',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: {
+                                bottom: 20
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
                     }
-                });
-            } catch (error) {
-                console.error('카테고리 차트 업데이트 중 오류 발생:', error);
-            }
+                }
+            });
         }
 
         function updateStaffStats(data) {
-            try {
-                const statsContainer = document.getElementById('staffStats');
-                const staffData = {};
-                
-                // 사용할 필드 결정
-                const staffField = data.deals.some(deal => deal.staff) ? 'staff' : 'deal_owner';
-                const statusField = data.deals.some(deal => deal.status) ? 'status' : 'deal_status';
-                
-                // 담당자별 통계 계산
-                data.deals.forEach(deal => {
-                    const staff = deal[staffField];
-                    if (!staff) return; // staff 필드가 없으면 건너뜁니다
-                    
-                    if (!staffData[staff]) {
-                        staffData[staff] = {
-                            total: 0,
-                            success: 0,
-                            rate: 0
-                        };
-                    }
-                    
-                    staffData[staff].total++;
-                    
-                    // status 필드가 여러 형태일 수 있으므로 확인
-                    const status = deal[statusField];
-                    if (status === 'success' || status === '성공') {
-                        staffData[staff].success++;
-                    }
-                });
-
-                // 성공률 계산 및 HTML 생성
-                let html = '<div class="staff-stats-grid">';
-                Object.entries(staffData).forEach(([staff, stats]) => {
-                    stats.rate = (stats.success / stats.total * 100).toFixed(1);
-                    html += `
-                        <div class="staff-stat-card">
-                            <h3>${staff}</h3>
-                            <p>전체 딜: ${stats.total}</p>
-                            <p>성공 딜: ${stats.success}</p>
-                            <p>성공률: ${stats.rate}%</p>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                
-                statsContainer.innerHTML = html;
-            } catch (error) {
-                console.error('담당자 통계 업데이트 중 오류 발생:', error);
+            if (!data.deals || data.deals.length === 0) {
+                console.warn("담당자 통계를 위한 데이터가 없습니다.");
+                return;
             }
+            
+            const staffData = {};
+            
+            // 담당자별 통계 계산
+            data.deals.forEach(deal => {
+                if (!deal.staff) return;
+                
+                if (!staffData[deal.staff]) {
+                    staffData[deal.staff] = {
+                        total: 0, // 리드수
+                        success: 0, // 수임수
+                        rate: 0 // 리드수임 점환율
+                    };
+                }
+                
+                staffData[deal.staff].total++;
+                if (deal.status === '성공') {
+                    staffData[deal.staff].success++;
+                }
+            });
+
+            // 성공률 계산
+            for (const staff in staffData) {
+                if (staffData[staff].total > 0) {
+                    staffData[staff].rate = ((staffData[staff].success / staffData[staff].total) * 100).toFixed(1);
+                }
+            }
+            
+            // 테이블로 데이터 표시
+            const tableBody = document.querySelector('#staffStatsTable tbody');
+            tableBody.innerHTML = '';
+            
+            Object.entries(staffData).forEach(([staff, stats]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${staff}</td>
+                    <td>${stats.total}</td>
+                    <td>${stats.rate}%</td>
+                    <td>${stats.success}</td>
+                `;
+                tableBody.appendChild(row);
+            });
         }
 
         // 데이터 로드 및 차트 업데이트 함수
