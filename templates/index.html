@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>유성욱 - IT Professional</title>
+    <title>딜 대시보드</title>
     <!-- favicon -->
     <link rel="icon" href="/static/favicon.png" type="image/png">
     <!-- Spoqa Han Sans Neo 폰트 CDN -->
@@ -37,37 +37,13 @@
             line-height: 1.6;
             color: var(--text-dark);
             background-color: var(--background-light);
+            padding-top: 20px;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
-        }
-
-        header {
-            background-color: var(--primary-color);
-            padding: 2rem 0;
-            box-shadow: var(--shadow);
-            margin-bottom: 3rem;
-            color: var(--text-light);
-        }
-
-        .profile {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .profile h1 {
-            font-weight: 500;
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .profile p {
-            font-weight: 400;
-            font-size: 1.2rem;
-            opacity: 0.9;
         }
 
         .section {
@@ -177,34 +153,6 @@
             font-size: 0.9rem;
         }
 
-        /* 대시보드 스타일 */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .dashboard-card {
-            background-color: var(--background-white);
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            text-align: center;
-        }
-
-        .dashboard-card h3 {
-            color: var(--primary-color);
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .dashboard-card .value {
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
         .chart-container {
             display: flex;
             flex-direction: column;
@@ -216,21 +164,6 @@
             padding: 1.5rem;
             border-radius: 8px;
             box-shadow: var(--shadow);
-        }
-
-        .chart-row {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-            margin-top: 1rem;
-        }
-
-        .chart-card {
-            background-color: var(--background-white);
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            height: 400px;
         }
 
         .modal {
@@ -315,35 +248,6 @@
             text-align: center;
         }
 
-        footer {
-            text-align: center;
-            padding: 2rem 0;
-            color: var(--text-dark);
-            font-weight: 300;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            .profile h1 {
-                font-size: 2rem;
-            }
-
-            .expertise-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .chart-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
         /* 테이블 스타일 추가 */
         .table-responsive {
             overflow-x: auto;
@@ -393,44 +297,18 @@
             font-weight: 500;
         }
 
-        .staff-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .staff-stat-card {
-            background-color: #f9f9fc;
-            border-radius: 8px;
-            padding: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .staff-stat-card h3 {
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-        
-        .chart-title {
-            font-size: 1.2rem;
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-            font-weight: 500;
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .expertise-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="profile">
-                <h1>유성욱</h1>
-                <p>IT Professional</p>
-            </div>
-        </div>
-    </header>
-
     <main class="container">
         <section class="section">
             <div class="section-header">
@@ -485,11 +363,6 @@
                 </div>
             </div>
         </section>
-
-        <section class="section">
-            <h2>비전</h2>
-            <p>기술을 통해 더 나은 세상을 만들어가는 것을 추구합니다. 지속적인 학습과 혁신을 통해 IT 산업의 발전에 기여하고자 합니다.</p>
-        </section>
     </main>
 
     <!-- 코멘트 추가 모달 -->
@@ -512,12 +385,6 @@
             </form>
         </div>
     </div>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 유성욱. All rights reserved.</p>
-        </div>
-    </footer>
 
     <script>
         // Supabase 클라이언트 초기화
