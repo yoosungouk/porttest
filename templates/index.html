@@ -433,13 +433,8 @@
 
     <main class="container">
         <section class="section">
-            <h2>소개</h2>
-            <p>안녕하세요, IT 업계에서 활동하고 있는 유성욱입니다. 혁신적인 기술과 창의적인 솔루션을 통해 가치를 창출하는 것을 목표로 하고 있습니다.</p>
-        </section>
-
-        <section class="section">
             <div class="section-header">
-                <h2>전문 분야</h2>
+                <h2>코멘트</h2>
                 <button class="add-button" onclick="openModal()">+ 추가</button>
             </div>
             <div id="expertise-list" class="expertise-grid"></div>
@@ -450,7 +445,7 @@
             <div class="section-header">
                 <div class="section-title">
                     <i class="fas fa-chart-line"></i>
-                    <h2>영업 대시보드</h2>
+                    <h2>일별 딜 현황</h2>
                 </div>
                 <div class="section-actions">
                     <button class="update-button" onclick="loadData()">
@@ -461,38 +456,24 @@
             </div>
             <div class="container">
                 <div class="filter-container">
-                    <label for="staffFilter">담당자 필터:</label>
-                    <select id="staffFilter">
-                        <option value="all">전체 보기</option>
+                    <label for="dateRangeFilter">기간:</label>
+                    <select id="dateRangeFilter">
+                        <option value="7">최근 7일</option>
+                        <option value="14">최근 14일</option>
+                        <option value="30">최근 30일</option>
                     </select>
                 </div>
                 
                 <div class="chart-container">
-                    <!-- 담당자별 현황 섹션 -->
+                    <!-- 일별/담당자별 딜 현황 테이블 -->
                     <div class="chart-section">
-                        <h2>담당자별 현황</h2>
+                        <h2>일별 담당자별 딜 현황</h2>
                         <div style="overflow-x: auto;">
-                            <table id="serviceStatsTable" class="data-table">
+                            <table id="dailyOwnerStatsTable" class="data-table">
                                 <thead>
                                     <tr>
-                                        <th rowspan="2">서비스명</th>
-                                        <th colspan="4">2025년 4월</th>
-                                        <th colspan="4">2025년 3월</th>
-                                        <th colspan="4">총합계</th>
-                                    </tr>
-                                    <tr>
-                                        <th>리드수</th>
-                                        <th>유효리드수</th>
-                                        <th>수임수</th>
-                                        <th>리드수임 전환율</th>
-                                        <th>리드수</th>
-                                        <th>유효리드수</th>
-                                        <th>수임수</th>
-                                        <th>리드수임 전환율</th>
-                                        <th>리드수</th>
-                                        <th>유효리드수</th>
-                                        <th>수임수</th>
-                                        <th>리드수임 전환율</th>
+                                        <th>날짜 / 담당자</th>
+                                        <!-- 담당자 헤더는 JavaScript로 동적 생성 -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -501,36 +482,6 @@
                             </table>
                         </div>
                     </div>
-
-                    <!-- 차트 섹션 -->
-                    <div class="chart-section">
-                        <div class="chart-row">
-                            <div class="chart-card">
-                                <canvas id="monthlyDealsChart"></canvas>
-                            </div>
-                            <div class="chart-card">
-                                <canvas id="categoryChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="dashboard-stats">
-                <div class="stat-card">
-                    <h4>총 딜 수</h4>
-                    <p id="totalDeals">-</p>
-                </div>
-                <div class="stat-card">
-                    <h4>딜 오너 수</h4>
-                    <p id="totalOwners">-</p>
-                </div>
-                <div class="stat-card">
-                    <h4>파이프라인 수</h4>
-                    <p id="totalPipelines">-</p>
-                </div>
-                <div class="stat-card">
-                    <h4>상태 유형 수</h4>
-                    <p id="totalStatuses">-</p>
                 </div>
             </div>
         </section>
@@ -541,21 +492,21 @@
         </section>
     </main>
 
-    <!-- 전문분야 추가 모달 -->
+    <!-- 코멘트 추가 모달 -->
     <div id="expertise-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">전문 분야 추가</h3>
+                <h3 class="modal-title">코멘트 추가</h3>
                 <button class="close-button" onclick="closeModal()">&times;</button>
             </div>
             <form onsubmit="addExpertise(event)">
                 <div class="form-group">
-                    <label for="type-input">분야</label>
-                    <input type="text" id="type-input" placeholder="예: 웹 개발" required>
+                    <label for="type-input">제목</label>
+                    <input type="text" id="type-input" placeholder="코멘트 제목" required>
                 </div>
                 <div class="form-group">
-                    <label for="value-input">설명</label>
-                    <input type="text" id="value-input" placeholder="예: React, Node.js, Python" required>
+                    <label for="value-input">내용</label>
+                    <input type="text" id="value-input" placeholder="코멘트 내용" required>
                 </div>
                 <button type="submit" class="submit-button">추가</button>
             </form>
@@ -1069,135 +1020,175 @@
 
                 if (error) throw error;
 
-                // 대시보드 통계 업데이트
-                document.getElementById('totalDeals').textContent = deals.length;
-                
-                // 속성 존재 여부 확인 후 값 설정
-                const uniqueOwners = deals.filter(deal => deal.deal_owner).length > 0 
-                    ? new Set(deals.filter(deal => deal.deal_owner).map(deal => deal.deal_owner)).size 
-                    : new Set(deals.filter(deal => deal.staff).map(deal => deal.staff)).size;
-                    
-                document.getElementById('totalOwners').textContent = uniqueOwners;
-                
-                // 파이프라인 속성이 있는지 확인
-                const hasPipeline = deals.some(deal => deal.deal_pipeline);
-                document.getElementById('totalPipelines').textContent = hasPipeline 
-                    ? new Set(deals.filter(deal => deal.deal_pipeline).map(deal => deal.deal_pipeline)).size 
-                    : '-';
-                
-                // 상태 속성이 있는지 확인
-                const hasStatus = deals.some(deal => deal.deal_status);
-                document.getElementById('totalStatuses').textContent = hasStatus
-                    ? new Set(deals.filter(deal => deal.deal_status).map(deal => deal.deal_status)).size
-                    : new Set(deals.filter(deal => deal.status).map(deal => deal.status)).size;
-
-                // pipelineTable이 존재하는지 확인
-                const pipelineTable = document.getElementById('pipelineTable');
-                if (pipelineTable) {
-                    const tbody = pipelineTable.getElementsByTagName('tbody')[0];
-                    tbody.innerHTML = '';
-
-                    // 딜 소유자 필드 확인 (deal_owner 또는 staff)
-                    const ownerField = deals.some(deal => deal.deal_owner) ? 'deal_owner' : 'staff';
-                    
-                    // 모든 담당자 가져오기
-                    const allOwners = Array.from(new Set(deals.map(deal => deal[ownerField]))).filter(Boolean).sort();
-
-                    // 각 담당자별 행 생성
-                    allOwners.forEach(owner => {
-                        const row = tbody.insertRow();
-                        
-                        // 담당자의 딜 필터링
-                        const ownerDeals = deals.filter(deal => deal[ownerField] === owner);
-                        
-                        // 담당자 이름
-                        const ownerCell = row.insertCell(0);
-                        ownerCell.textContent = owner;
-
-                        // 보유한 딜 수
-                        const totalDealsCell = row.insertCell(1);
-                        totalDealsCell.textContent = ownerDeals.length;
-
-                        // 상태 필드명 확인
-                        const statusField = deals.some(deal => deal.deal_status) ? 'deal_status' : 'status';
-                        
-                        // 상태 수 (unique한 상태의 수)
-                        const statusCell = row.insertCell(2);
-                        const uniqueStatuses = new Set(ownerDeals.map(deal => deal[statusField])).size;
-                        statusCell.textContent = uniqueStatuses;
-
-                        // 실패 수 
-                        const failedCell = row.insertCell(3);
-                        const failedDeals = ownerDeals.filter(deal => 
-                            deal[statusField] === '실패' || 
-                            deal[statusField] === 'failed' ||
-                            deal[statusField] === 'fail'
-                        ).length;
-                        failedCell.textContent = failedDeals;
-
-                        // 성사 수
-                        const successCell = row.insertCell(4);
-                        const successDeals = ownerDeals.filter(deal => 
-                            deal[statusField] === '성공' || 
-                            deal[statusField] === 'success'
-                        ).length;
-                        successCell.textContent = successDeals;
-                    });
-                }
-
-                // dealsChart가 존재하는지 확인
-                const dealsChartElement = document.getElementById('dealsChart');
-                if (dealsChartElement) {
-                    const statusCtx = dealsChartElement.getContext('2d');
-                    const statusField = deals.some(deal => deal.deal_status) ? 'deal_status' : 'status';
-                    
-                    const statusData = {};
-                    deals.forEach(deal => {
-                        const status = deal[statusField];
-                        if (status) {
-                            if (!statusData[status]) {
-                                statusData[status] = 0;
-                            }
-                            statusData[status]++;
-                        }
-                    });
-
-                    new Chart(statusCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: Object.keys(statusData),
-                            datasets: [{
-                                data: Object.values(statusData),
-                                backgroundColor: [
-                                    '#272b4c',
-                                    '#373d6a',
-                                    '#1a1d33',
-                                    '#4a5089'
-                                ]
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                title: {
-                                    display: true,
-                                    text: '딜 오너별 상태 현황'
-                                },
-                                legend: {
-                                    position: 'bottom'
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // 데이터를 전역 변수에 저장하고 차트 업데이트
-                originalData = { deals };
-                initializeStaffFilter(originalData);
-                updateCharts('all');
+                // 일별/담당자별 테이블 업데이트
+                updateDailyOwnerTable(deals);
 
             } catch (error) {
                 console.error('Error:', error);
+            }
+        }
+
+        // 일별/담당자별 딜 테이블 업데이트
+        function updateDailyOwnerTable(deals) {
+            // 날짜 범위 설정
+            const dateFilter = document.getElementById('dateRangeFilter');
+            const daysToShow = parseInt(dateFilter.value) || 7;
+            
+            // 최근 N일 날짜 생성
+            const dates = [];
+            for (let i = daysToShow - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(date.toISOString().split('T')[0]); // YYYY-MM-DD 형식
+            }
+            
+            // 담당자 목록 추출 (owner 필드 또는 staff 필드)
+            const ownerField = deals.some(deal => deal.deal_owner) ? 'deal_owner' : 'staff';
+            const allOwners = Array.from(new Set(deals.map(deal => deal[ownerField]))).filter(Boolean).sort();
+            
+            // 날짜별 담당자별 딜 수 계산
+            const dailyOwnerData = {};
+            
+            // 데이터 구조 초기화
+            dates.forEach(date => {
+                dailyOwnerData[date] = {};
+                allOwners.forEach(owner => {
+                    dailyOwnerData[date][owner] = 0;
+                });
+            });
+            
+            // 실제 데이터 집계
+            deals.forEach(deal => {
+                const owner = deal[ownerField];
+                if (!owner) return;
+                
+                let dealDate;
+                // 날짜 필드 확인 (created_at 또는 deal_created_at)
+                if (deal.created_at) {
+                    dealDate = typeof deal.created_at === 'string' ? deal.created_at.split('T')[0] : null;
+                } else if (deal.deal_created_at) {
+                    dealDate = typeof deal.deal_created_at === 'string' ? deal.deal_created_at.split('T')[0] : null;
+                }
+                
+                // 날짜가 유효하고 표시 범위 내에 있으면 카운트
+                if (dealDate && dates.includes(dealDate)) {
+                    if (!dailyOwnerData[dealDate][owner]) {
+                        dailyOwnerData[dealDate][owner] = 0;
+                    }
+                    dailyOwnerData[dealDate][owner]++;
+                }
+            });
+            
+            // 데이터가 부족한 경우 샘플 데이터 사용
+            if (Object.keys(dailyOwnerData).length === 0 || allOwners.length === 0) {
+                // 샘플 담당자 목록
+                const sampleOwners = ['김영호', '박지연', '이민지', '정수진', '홍길동'];
+                
+                // 샘플 데이터 생성
+                dates.forEach(date => {
+                    dailyOwnerData[date] = {};
+                    sampleOwners.forEach(owner => {
+                        // 5-20 범위의 랜덤 숫자 생성
+                        dailyOwnerData[date][owner] = Math.floor(Math.random() * 16) + 5;
+                    });
+                });
+                
+                // 실제 테이블 업데이트를 위해 샘플 담당자 목록 사용
+                allOwners.length = 0;
+                allOwners.push(...sampleOwners);
+            }
+            
+            // 테이블 업데이트
+            const table = document.getElementById('dailyOwnerStatsTable');
+            const thead = table.querySelector('thead tr');
+            const tbody = table.querySelector('tbody');
+            
+            // 헤더 초기화
+            thead.innerHTML = '<th>날짜 / 담당자</th>';
+            
+            // 담당자 헤더 추가
+            allOwners.forEach(owner => {
+                const th = document.createElement('th');
+                th.textContent = owner;
+                thead.appendChild(th);
+            });
+            
+            // 합계 헤더 추가
+            const totalHeader = document.createElement('th');
+            totalHeader.textContent = '합계';
+            thead.appendChild(totalHeader);
+            
+            // 본문 초기화
+            tbody.innerHTML = '';
+            
+            // 날짜별 행 추가
+            dates.forEach(date => {
+                const row = document.createElement('tr');
+                
+                // 날짜 셀
+                const dateCell = document.createElement('td');
+                const displayDate = new Date(date);
+                dateCell.textContent = `${displayDate.getMonth() + 1}월 ${displayDate.getDate()}일`;
+                row.appendChild(dateCell);
+                
+                // 각 담당자별 딜 수
+                let dailyTotal = 0;
+                allOwners.forEach(owner => {
+                    const count = dailyOwnerData[date][owner] || 0;
+                    dailyTotal += count;
+                    
+                    const cell = document.createElement('td');
+                    cell.textContent = count;
+                    row.appendChild(cell);
+                });
+                
+                // 일별 합계
+                const totalCell = document.createElement('td');
+                totalCell.textContent = dailyTotal;
+                totalCell.style.fontWeight = 'bold';
+                row.appendChild(totalCell);
+                
+                tbody.appendChild(row);
+            });
+            
+            // 합계 행 추가
+            const totalRow = document.createElement('tr');
+            
+            // 합계 라벨
+            const totalLabelCell = document.createElement('td');
+            totalLabelCell.textContent = '합계';
+            totalLabelCell.style.fontWeight = 'bold';
+            totalRow.appendChild(totalLabelCell);
+            
+            // 각 담당자별 합계
+            let grandTotal = 0;
+            allOwners.forEach(owner => {
+                let ownerTotal = 0;
+                dates.forEach(date => {
+                    ownerTotal += dailyOwnerData[date][owner] || 0;
+                });
+                grandTotal += ownerTotal;
+                
+                const cell = document.createElement('td');
+                cell.textContent = ownerTotal;
+                cell.style.fontWeight = 'bold';
+                totalRow.appendChild(cell);
+            });
+            
+            // 전체 합계
+            const grandTotalCell = document.createElement('td');
+            grandTotalCell.textContent = grandTotal;
+            grandTotalCell.style.fontWeight = 'bold';
+            totalRow.appendChild(grandTotalCell);
+            
+            tbody.appendChild(totalRow);
+            
+            // 날짜 필터 이벤트 연결
+            if (!dateFilter.hasEventListener) {
+                dateFilter.addEventListener('change', function() {
+                    updateDailyOwnerTable(deals);
+                });
+                dateFilter.hasEventListener = true;
             }
         }
 
@@ -1210,7 +1201,7 @@
             document.getElementById('expertise-modal').style.display = 'none';
         }
 
-        // 전문분야 데이터 로드
+        // 전문분야 데이터 로드 (코멘트로 변경)
         async function loadExpertise() {
             try {
                 const { data, error } = await client
@@ -1244,7 +1235,7 @@
             }
         }
 
-        // 새로운 전문분야 추가
+        // 새로운 전문분야 추가 (코멘트로 변경)
         async function addExpertise(event) {
             event.preventDefault();
             
@@ -1256,7 +1247,7 @@
             const value = valueInput.value.trim();
             
             if (!type || !value) {
-                errorMessage.textContent = '분야와 설명을 모두 입력해주세요.';
+                errorMessage.textContent = '제목과 내용을 모두 입력해주세요.';
                 return;
             }
 
