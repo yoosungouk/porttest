@@ -8,312 +8,44 @@
     <link rel="icon" href="/static/favicon.png" type="image/png">
     <!-- Spoqa Han Sans Neo 폰트 CDN -->
     <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css'>
-    <!-- Supabase CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    
+    <!-- 디버깅 스크립트 -->
+    <script>
+        console.log('페이지 로딩 시작');
+        window.addEventListener('error', function(event) {
+            console.error('전역 오류 발생:', event.message, 'at', event.filename, ':', event.lineno);
+        });
+    </script>
+    
+    <!-- Supabase UMD 스크립트 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase 로딩 확인
+        console.log('Supabase 로딩 확인:', typeof supabase !== 'undefined' ? '성공' : '실패');
+    </script>
+    
+    <!-- jQuery (차트 및 UI 상호작용 필요) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #272b4c;
-            --primary-light: #373d6a;
-            --primary-dark: #1a1d33;
-            --text-light: #ffffff;
-            --text-dark: #2c3e50;
-            --background-light: #f5f5f5;
-            --background-white: #ffffff;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Spoqa Han Sans Neo', 'sans-serif';
-            line-height: 1.6;
-            color: var(--text-dark);
-            background-color: var(--background-light);
-            padding-top: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .section {
-            background-color: var(--background-white);
-            padding: 2rem;
-            border-radius: 10px;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 0.5rem;
-        }
-
-        .section-title {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .section-title i {
-            font-size: 1.2rem;
-            color: var(--primary-color);
-        }
-
-        .section-header h2 {
-            font-weight: 500;
-            color: var(--primary-color);
-            margin: 0;
-        }
-
-        .section-actions {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .update-button {
-            background-color: var(--primary-color);
-            color: var(--text-light);
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .update-button:hover {
-            background-color: var(--primary-light);
-        }
-
-        .update-button i {
-            font-size: 0.9rem;
-        }
-
-        .add-button {
-            background-color: var(--primary-color);
-            color: var(--text-light);
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.3s;
-        }
-
-        .add-button:hover {
-            background-color: var(--primary-light);
-        }
-
-        .expertise-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .expertise-card {
-            background-color: var(--background-light);
-            border-radius: 8px;
-            padding: 1rem;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s;
-        }
-
-        .expertise-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .expertise-type {
-            font-weight: 500;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .expertise-value {
-            color: var(--text-dark);
-            font-size: 0.9rem;
-        }
-
-        .chart-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .chart-section {
-            background-color: var(--background-white);
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: var(--background-white);
-            padding: 2rem;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-title {
-            font-size: 1.2rem;
-            color: var(--primary-color);
-            margin: 0;
-        }
-
-        .close-button {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-dark);
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-dark);
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-
-        .submit-button {
-            width: 100%;
-            padding: 0.75rem;
-            background-color: var(--primary-color);
-            color: var(--text-light);
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s;
-        }
-
-        .submit-button:hover {
-            background-color: var(--primary-light);
-        }
-
-        .error-message {
-            color: #e74c3c;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-            text-align: center;
-        }
-
-        /* 테이블 스타일 추가 */
-        .table-responsive {
-            overflow-x: auto;
-            margin-top: 1rem;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        
-        .data-table th, .data-table td {
-            padding: 0.75rem;
-            text-align: center;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .data-table th {
-            background-color: #f5f5f8;
-            color: var(--primary-color);
-            font-weight: 500;
-        }
-        
-        .data-table tr:hover {
-            background-color: #f9f9fc;
-        }
-
-        .filter-container {
-            background-color: var(--background-white);
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1.5rem;
-        }
-
-        .filter-container select {
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            min-width: 200px;
-        }
-
-        .filter-container label {
-            margin-right: 1rem;
-            font-weight: 500;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            .expertise-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 커스텀 CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    
+    <!-- 외부 JavaScript 먼저 로드 -->
+    <script src="/static/js/config.js"></script>
 </head>
 <body>
     <main class="container">
         <section class="section">
             <div class="section-header">
                 <h2>코멘트</h2>
-                <button class="add-button" onclick="openModal()">+ 추가</button>
+                <button class="add-button">+ 추가</button>
             </div>
             <div id="expertise-list" class="expertise-grid"></div>
             <div id="error-message" class="error-message"></div>
@@ -323,10 +55,10 @@
             <div class="section-header">
                 <div class="section-title">
                     <i class="fas fa-chart-line"></i>
-                    <h2>일별 딜 현황</h2>
+                    <h2>월별 리드 현황</h2>
                 </div>
                 <div class="section-actions">
-                    <button class="update-button" onclick="loadData()">
+                    <button class="update-button" id="reload-data-btn">
                         <i class="fas fa-sync-alt"></i>
                         실시간 업데이트
                     </button>
@@ -334,23 +66,44 @@
             </div>
             <div class="container">
                 <div class="filter-container">
-                    <label for="dateRangeFilter">기간:</label>
-                    <select id="dateRangeFilter">
-                        <option value="7">최근 7일</option>
-                        <option value="14">최근 14일</option>
-                        <option value="30">최근 30일</option>
-                    </select>
+                    <div class="filter-group-container">
+                        <div class="filter-group">
+                            <label for="dateRangeFilter">기간:</label>
+                            <select id="dateRangeFilter">
+                                <option value="3">최근 3개월</option>
+                                <option value="6">최근 6개월</option>
+                                <option value="12" selected>최근 12개월</option>
+                                <option value="24">최근 24개월</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="ownerFilter">담당자:</label>
+                            <select id="ownerFilter">
+                                <option value="all">전체</option>
+                                <!-- 담당자 옵션은 JavaScript로 동적 생성 -->
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="statusFilter">상태:</label>
+                            <select id="statusFilter">
+                                <option value="all">전체</option>
+                                <option value="success">성사됨</option>
+                                <option value="progress">진행중</option>
+                                <option value="fail">실패</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="chart-container">
-                    <!-- 일별/담당자별 딜 현황 테이블 -->
+                    <!-- 월별/담당자별 딜 현황 테이블 -->
                     <div class="chart-section">
-                        <h2>일별 담당자별 딜 현황</h2>
+                        <h2>월별 담당자별 딜 현황</h2>
                         <div style="overflow-x: auto;">
                             <table id="dailyOwnerStatsTable" class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>날짜 / 담당자</th>
+                                        <th>담당자 / 월</th>
                                         <!-- 담당자 헤더는 JavaScript로 동적 생성 -->
                                     </tr>
                                 </thead>
@@ -360,19 +113,137 @@
                             </table>
                         </div>
                     </div>
+                    
+                    <!-- 월별 리드-수임 전환율 추이 차트 -->
+                    <div class="chart-section">
+                        <h2>월별 리드-수임 전환율 추이</h2>
+                        <div class="chart-filters">
+                            <div class="filter-group">
+                                <label for="conversion-date-range">기간:</label>
+                                <select id="conversion-date-range">
+                                    <option value="3">최근 3개월</option>
+                                    <option value="6">최근 6개월</option>
+                                    <option value="12" selected>최근 12개월</option>
+                                    <option value="24">최근 24개월</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-canvas-container">
+                            <canvas id="conversionRateChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 거래 목록 테이블 섹션 추가 -->
+        <section class="section mt-4">
+            <div class="section-header">
+                <h2>거래 목록</h2>
+                <div class="section-actions">
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="search-input" class="form-control" placeholder="거래 검색...">
+                        <div class="input-group-append">
+                            <button id="search-btn" class="btn btn-outline-secondary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>이름</th>
+                            <th>담당자</th>
+                            <th>금액</th>
+                            <th>상태</th>
+                            <th>소스</th>
+                            <th>생성일</th>
+                            <th>액션</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deals-table-body">
+                        <!-- 거래 데이터는 JavaScript로 채워집니다 -->
+                    </tbody>
+                </table>
+                <div id="no-deals-message" class="text-center p-3" style="display:none;">
+                    조건에 맞는 거래가 없습니다.
+                </div>
+                <!-- 페이지네이션 컨테이너 추가 -->
+                <div id="deals-pagination" class="pagination-container d-flex justify-content-center mt-3">
+                    <!-- 페이지네이션 버튼은 JavaScript로 생성됩니다 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 대시보드 카드 섹션 추가 -->
+        <section class="section mt-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <div id="total-deals-card" class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <div class="card-info">
+                            <div class="counter">0</div>
+                            <div class="label">총 거래 수</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div id="total-value-card" class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-won-sign"></i>
+                        </div>
+                        <div class="card-info">
+                            <div class="counter">₩0</div>
+                            <div class="label">총 금액</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div id="conversion-rate-card" class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="card-info">
+                            <div class="counter">0%</div>
+                            <div class="label">전환율</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div id="avg-deal-size-card" class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="card-info">
+                            <div class="counter">₩0</div>
+                            <div class="label">평균 거래 규모</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
+
+    <!-- 로딩 인디케이터 추가 -->
+    <div id="loader" class="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+    <div id="loader-overlay" class="loader-overlay" style="display:none;"></div>
 
     <!-- 코멘트 추가 모달 -->
     <div id="expertise-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">코멘트 추가</h3>
-                <button class="close-button" onclick="closeModal()">&times;</button>
+                <button class="close-button">&times;</button>
             </div>
-            <form onsubmit="addExpertise(event)">
+            <form>
                 <div class="form-group">
                     <label for="type-input">제목</label>
                     <input type="text" id="type-input" placeholder="코멘트 제목" required>
@@ -386,850 +257,30 @@
         </div>
     </div>
 
+    <!-- 나머지 외부 JavaScript 로드 -->
+    <script src="/static/js/chart.js"></script>
+    <script src="/static/js/data.js"></script>
+    <script src="/static/js/ui.js"></script>
+    
     <script>
-        // Supabase 클라이언트 초기화
-        const supabaseUrl = "https://zthihjyrifsbssbsaaky.supabase.co";
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0aGloanlyaWZzYnNzYnNhYWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0Nzc5NzgsImV4cCI6MjA2MDA1Mzk3OH0.27a9HrNmT89ZoRExQUSpMkUNRmnawN1poJnYV0rXTHE";
-        const client = supabase.createClient(supabaseUrl, supabaseKey);
-
-        // 전역 변수로 차트 인스턴스들을 저장
-        let monthlyDealsChart = null;
-        let categoryChart = null;
-
-        // 데이터 필터링 함수
-        function filterDataByStaff(data, staffName) {
-            if (staffName === 'all') return data;
-            
-            return {
-                ...data,
-                deals: data.deals.filter(deal => deal.staff === staffName)
-            };
-        }
-
-        // 차트 업데이트 함수
-        function updateCharts(staffName) {
-            if (!originalData || !originalData.deals || originalData.deals.length === 0) {
-                console.error('데이터가 없습니다.');
-                return;
-            }
-            
-            const filteredData = filterDataByStaff(originalData, staffName);
-            updateDailyChart(filteredData);
-            updateCategoryChart(filteredData);
-            updateStaffStats(filteredData);
-        }
-
-        // 담당자 필터 초기화
-        function initializeStaffFilter(data) {
-            if (!data || !data.deals || data.deals.length === 0) {
-                console.error('필터 초기화할 데이터가 없습니다.');
-                return;
-            }
-            
-            const staffFilter = document.getElementById('staffFilter');
-            const staffSet = new Set(data.deals.map(deal => deal.staff));
-            
-            staffFilter.innerHTML = '<option value="all">전체 보기</option>';
-            
-            staffSet.forEach(staff => {
-                if (staff) {
-                    const option = document.createElement('option');
-                    option.value = staff;
-                    option.textContent = staff;
-                    staffFilter.appendChild(option);
-                }
-            });
-
-            staffFilter.addEventListener('change', (e) => {
-                updateCharts(e.target.value);
-            });
-        }
-
-        // 원본 데이터를 저장할 변수
-        let originalData = null;
-
-        // 데이터 로드 및 초기화
-        async function initializeData() {
-            try {
-                const response = await fetch('/api/deals');
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP 에러! 상태: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (!data || !data.deals || data.deals.length === 0) {
-                    console.error('API에서 반환된 데이터가 없습니다.');
-                    return;
-                }
-                
-                console.log('로드된 데이터:', data);
-                
-                originalData = data;
-                initializeStaffFilter(originalData);
-                updateCharts('all');
-            } catch (error) {
-                console.error('Error loading data:', error);
-            }
-        }
-
-        // 기존의 차트 생성 코드를 updateDailyChart 함수로 변경
-        function updateDailyChart(data) {
-            const dailyData = {};
-            
-            // 임의의 샘플 데이터 (디버깅용)
-            const sampleData = {
-                '2024-04-01': { total: 682, success: 197, rate: 28.9 },
-                '2024-04-02': { total: 634, success: 207, rate: 32.6 },
-                '2024-04-03': { total: 451, success: 202, rate: 44.8 },
-                '2024-04-04': { total: 390, success: 131, rate: 33.6 },
-                '2024-04-05': { total: 401, success: 135, rate: 33.7 },
-                '2024-04-06': { total: 526, success: 106, rate: 20.2 },
-                '2024-04-07': { total: 651, success: 201, rate: 30.9 }
-            };
-            
-            // 최근 7일 날짜 배열
-            const last7Days = Object.keys(sampleData).sort();
-            
-            // 실제 데이터가 있으면 사용하고, 없으면 샘플 데이터 사용
-            if (data.deals && data.deals.length > 0) {
-                // 데이터 초기화
-                last7Days.forEach(day => {
-                    dailyData[day] = {
-                        total: 0,
-                        success: 0,
-                        rate: 0
-                    };
-                });
-                
-                // 데이터 집계
-                data.deals.forEach(deal => {
-                    try {
-                        const dateStr = deal.created_at;
-                        let dateKey;
-                        
-                        if (typeof dateStr === 'string') {
-                            if (dateStr.includes('T')) {
-                                dateKey = dateStr.split('T')[0];
-                            } else if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                                dateKey = dateStr;
-                            } else {
-                                return;
-                            }
-                            
-                            if (last7Days.includes(dateKey)) {
-                                dailyData[dateKey].total++;
-                                if (deal.status === '성공') {
-                                    dailyData[dateKey].success++;
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        console.error("날짜 변환 오류:", e);
-                    }
-                });
-                
-                // 성공률 계산
-                last7Days.forEach(day => {
-                    if (dailyData[day].total > 0) {
-                        dailyData[day].rate = (dailyData[day].success / dailyData[day].total) * 100;
-                    }
-                });
-            } else {
-                // 샘플 데이터 사용
-                console.log("실제 데이터가 없어 샘플 데이터를 사용합니다.");
-                Object.assign(dailyData, sampleData);
-            }
-            
-            // 차트 데이터 포맷팅
-            const chartData = {
-                labels: last7Days.map(date => {
-                    const d = new Date(date);
-                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                }),
-                totalDeals: last7Days.map(day => dailyData[day].total),
-                successDeals: last7Days.map(day => dailyData[day].success),
-                rates: last7Days.map(day => dailyData[day].rate)
-            };
-            
-            // 차트 생성
-            if (monthlyDealsChart) {
-                monthlyDealsChart.destroy();
-            }
-
-            const dailyCtx = document.getElementById('monthlyDealsChart').getContext('2d');
-            monthlyDealsChart = new Chart(dailyCtx, {
-                type: 'bar',
-                data: {
-                    labels: chartData.labels,
-                    datasets: [
-                        {
-                            label: '리드수',
-                            data: chartData.totalDeals,
-                            backgroundColor: '#272b4c',
-                            order: 2,
-                            yAxisID: 'y',
-                            barPercentage: 0.6
-                        },
-                        {
-                            label: '수임수',
-                            data: chartData.successDeals,
-                            backgroundColor: '#4a5089',
-                            order: 1,
-                            yAxisID: 'y',
-                            barPercentage: 0.6
-                        },
-                        {
-                            label: '리드수임 점환율',
-                            data: chartData.rates,
-                            type: 'line',
-                            borderColor: '#00a3e0',
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0.1,
-                            yAxisID: 'percentage',
-                            order: 0,
-                            pointRadius: 4,
-                            pointHoverRadius: 6
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: {
-                        padding: {
-                            top: 20,
-                            right: 20,
-                            bottom: 20,
-                            left: 20
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            position: 'left',
-                            grid: {
-                                borderDash: [2, 4]
-                            },
-                            title: {
-                                display: true,
-                                text: '딜 수',
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        percentage: {
-                            position: 'right',
-                            beginAtZero: true,
-                            max: 100,
-                            grid: {
-                                display: false
-                            },
-                            title: {
-                                display: true,
-                                text: '성공률 (%)',
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: '최근 7일 딜 현황',
-                            font: {
-                                size: 16,
-                                weight: 'bold'
-                            },
-                            padding: {
-                                bottom: 20
-                            }
-                        },
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 20
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateCategoryChart(data) {
-            // 샘플 카테고리 데이터
-            const sampleCategoryData = {
-                'SaaS': 35,
-                'Cloud': 28,
-                'AI': 22,
-                'Finance': 18,
-                'IoT': 15,
-                'Analytics': 12,
-                'Security': 9
-            };
-            
-            // 카테고리 데이터 초기화
-            let categoryData = {};
-            
-            // 실제 데이터가 있으면 사용하고, 없으면 샘플 데이터 사용
-            if (data.deals && data.deals.length > 0 && data.deals.some(deal => deal.category)) {
-                // 카테고리 필드가 있는 경우 실제 데이터 사용
-                data.deals.forEach(deal => {
-                    const category = deal.category || "기타";
-                    
-                    if (!categoryData[category]) {
-                        categoryData[category] = 0;
-                    }
-                    categoryData[category]++;
-                });
-                
-                // 카테고리 데이터가 없거나 부족한 경우 샘플 데이터 사용
-                if (Object.keys(categoryData).length < 3) {
-                    console.log("실제 카테고리 데이터가 부족하여 샘플 데이터를 사용합니다.");
-                    categoryData = sampleCategoryData;
-                }
-            } else {
-                console.log("카테고리 데이터가 없어 샘플 데이터를 사용합니다.");
-                categoryData = sampleCategoryData;
-            }
-            
-            // 차트 생성
-            if (categoryChart) {
-                categoryChart.destroy();
-            }
-
-            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-            categoryChart = new Chart(categoryCtx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(categoryData),
-                    datasets: [{
-                        label: '카테고리별 딜 수',
-                        data: Object.values(categoryData),
-                        backgroundColor: '#272b4c',
-                        borderColor: '#4a5089',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                borderDash: [2, 4]
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: '카테고리별 딜 현황',
-                            font: {
-                                size: 16,
-                                weight: 'bold'
-                            },
-                            padding: {
-                                bottom: 20
-                            }
-                        },
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateStaffStats(data) {
-            // 샘플 데이터 - 서비스별 통계
-            const sampleServiceData = {
-                'null': {
-                    '2025-04': { leads: 0, validLeads: 0, success: 0, rate: 0 },
-                    '2025-03': { leads: 6, validLeads: 6, success: 0, rate: 0 },
-                    'total': { leads: 9017, validLeads: 6648, success: 1381, rate: 15.3 }
-                },
-                '본점': {
-                    '2025-04': { leads: 84, validLeads: 84, success: 7, rate: 8.3 },
-                    '2025-03': { leads: 164, validLeads: 164, success: 0, rate: 0 },
-                    'total': { leads: 2033, validLeads: 1914, success: 464, rate: 22.8 }
-                },
-                '양재2호점': {
-                    '2025-04': { leads: 16, validLeads: 16, success: 3, rate: 18.8 },
-                    '2025-03': { leads: 41, validLeads: 41, success: 0, rate: 0 },
-                    'total': { leads: 1824, validLeads: 1637, success: 338, rate: 18.5 }
-                },
-                '선릉점': {
-                    '2025-04': { leads: 38, validLeads: 38, success: 6, rate: 15.8 },
-                    '2025-03': { leads: 47, validLeads: 47, success: 0, rate: 0 },
-                    'total': { leads: 1402, validLeads: 1305, success: 368, rate: 26.2 }
-                },
-                '송파점': {
-                    '2025-04': { leads: 0, validLeads: 0, success: 0, rate: 0 },
-                    '2025-03': { leads: 1, validLeads: 1, success: 0, rate: 0 },
-                    'total': { leads: 1380, validLeads: 1147, success: 314, rate: 22.8 }
-                },
-                '서초점': {
-                    '2025-04': { leads: 0, validLeads: 0, success: 0, rate: 0 },
-                    '2025-03': { leads: 0, validLeads: 0, success: 0, rate: 0 },
-                    'total': { leads: 1074, validLeads: 793, success: 247, rate: 23.0 }
-                },
-                '영등포점': {
-                    '2025-04': { leads: 0, validLeads: 0, success: 0, rate: 0 },
-                    '2025-03': { leads: 2, validLeads: 2, success: 0, rate: 0 },
-                    'total': { leads: 1055, validLeads: 796, success: 237, rate: 22.5 }
-                },
-                '양재점': {
-                    '2025-04': { leads: 42, validLeads: 42, success: 11, rate: 26.2 },
-                    '2025-03': { leads: 2, validLeads: 2, success: 0, rate: 0 },
-                    'total': { leads: 1053, validLeads: 898, success: 323, rate: 30.7 }
-                },
-                '마곡점': {
-                    '2025-04': { leads: 3, validLeads: 3, success: 3, rate: 100.0 },
-                    '2025-03': { leads: 9, validLeads: 9, success: 0, rate: 0 },
-                    'total': { leads: 1038, validLeads: 770, success: 355, rate: 34.2 }
-                },
-                '성수점': {
-                    '2025-04': { leads: 0, validLeads: 0, success: 0, rate: 0 },
-                    '2025-03': { leads: 1, validLeads: 1, success: 0, rate: 0 },
-                    'total': { leads: 969, validLeads: 713, success: 151, rate: 15.6 }
-                },
-                'SC점': {
-                    '2025-04': { leads: 28, validLeads: 28, success: 9, rate: 32.1 },
-                    '2025-03': { leads: 5, validLeads: 5, success: 0, rate: 0 },
-                    'total': { leads: 823, validLeads: 699, success: 256, rate: 31.1 }
-                }
-            };
-            
-            // 테이블로 데이터 표시
-            const tableBody = document.querySelector('#serviceStatsTable tbody');
-            tableBody.innerHTML = '';
-            
-            // 서비스별 데이터 표시
-            Object.entries(sampleServiceData).forEach(([service, monthData]) => {
-                const row = document.createElement('tr');
-                const april = monthData['2025-04'];
-                const march = monthData['2025-03'];
-                const total = monthData['total'];
-                
-                // 셀에 배경색 추가 함수
-                const getColorClass = (rate) => {
-                    if (rate >= 30) return 'style="background-color: #1e88e5; color: white;"';
-                    if (rate >= 20) return 'style="background-color: #90caf9;"';
-                    if (rate > 0) return 'style="background-color: #e3f2fd;"';
-                    return '';
-                };
-                
-                row.innerHTML = `
-                    <td>${service}</td>
-                    <td>${april.leads || '-'}</td>
-                    <td>${april.validLeads || '-'}</td>
-                    <td>${april.success || '-'}</td>
-                    <td ${getColorClass(april.rate)}>${april.rate ? april.rate + '%' : '-'}</td>
-                    <td>${march.leads || '-'}</td>
-                    <td>${march.validLeads || '-'}</td>
-                    <td>${march.success || '-'}</td>
-                    <td ${getColorClass(march.rate)}>${march.rate ? march.rate + '%' : '-'}</td>
-                    <td>${total.leads}</td>
-                    <td>${total.validLeads}</td>
-                    <td>${total.success}</td>
-                    <td ${getColorClass(total.rate)}>${total.rate}%</td>
-                `;
-                tableBody.appendChild(row);
-            });
-            
-            // 총합계 행 추가
-            const totalRow = document.createElement('tr');
-            totalRow.innerHTML = `
-                <td style="font-weight: bold;">총 합계</td>
-                <td>328</td>
-                <td>328</td>
-                <td>62</td>
-                <td style="background-color: #e3f2fd;">18.9%</td>
-                <td>612</td>
-                <td>612</td>
-                <td>0</td>
-                <td>-</td>
-                <td>34,318</td>
-                <td>28,554</td>
-                <td>7,356</td>
-                <td style="background-color: #e3f2fd;">21.4%</td>
-            `;
-            tableBody.appendChild(totalRow);
-        }
-
-        // 데이터 로드 및 차트 업데이트 함수
-        async function loadData() {
-            try {
-                const { data: deals, error } = await client
-                    .from('deals')
-                    .select('*');
-
-                if (error) {
-                    console.error('데이터 로드 오류:', error);
-                    document.querySelector('.chart-section').innerHTML = `
-                        <div class="error-message" style="padding: 20px; text-align: center;">
-                            <h3>데이터 로드 오류 발생</h3>
-                            <p>${error.message || '서버에 연결할 수 없습니다.'}</p>
-                            <p>잠시 후 다시 시도해주세요.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                if (!deals || deals.length === 0) {
-                    console.log('데이터가 없습니다. 샘플 데이터를 사용합니다.');
-                    // 샘플 데이터 생성
-                    const sampleDeals = generateSampleDeals();
-                    // 일별/담당자별 테이블 업데이트
-                    updateDailyOwnerTable(sampleDeals);
-                } else {
-                    console.log('로드된 데이터:', deals.length, '건');
-                    // 실제 데이터로 테이블 업데이트
-                    updateDailyOwnerTable(deals);
-                }
-
-            } catch (error) {
-                console.error('Error:', error);
-                document.querySelector('.chart-section').innerHTML = `
-                    <div class="error-message" style="padding: 20px; text-align: center;">
-                        <h3>데이터 로드 오류 발생</h3>
-                        <p>${error.message || '알 수 없는 오류가 발생했습니다.'}</p>
-                        <p>잠시 후 다시 시도해주세요.</p>
-                    </div>
-                `;
-            }
-        }
-
-        // 샘플 데이터 생성 함수
-        function generateSampleDeals() {
-            const owners = ['김영호', '박지연', '이민지', '정수진', '홍길동'];
-            const deals = [];
-            
-            // 최근 30일에 대한 샘플 데이터 생성
-            const today = new Date();
-            
-            for (let i = 0; i < 100; i++) {
-                // 랜덤 날짜 (최근 30일 내)
-                const daysAgo = Math.floor(Math.random() * 30);
-                const date = new Date(today);
-                date.setDate(date.getDate() - daysAgo);
-                
-                // 랜덤 담당자
-                const owner = owners[Math.floor(Math.random() * owners.length)];
-                
-                deals.push({
-                    id: i + 1,
-                    deal_owner: owner,
-                    deal_created_at: date.toISOString(),
-                    // 필요시 추가 필드 생성
-                });
-            }
-            
-            return deals;
-        }
-
-        // 일별/담당자별 딜 테이블 업데이트
-        function updateDailyOwnerTable(deals) {
-            // 날짜 범위 설정
-            const dateFilter = document.getElementById('dateRangeFilter');
-            const daysToShow = parseInt(dateFilter.value) || 7;
-            
-            // 최근 N일 날짜 생성
-            const dates = [];
-            for (let i = daysToShow - 1; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                dates.push(date.toISOString().split('T')[0]); // YYYY-MM-DD 형식
-            }
-            
-            // 담당자 목록 추출 - 명확히 deal_owner 사용
-            const ownerField = 'deal_owner';
-            const allOwners = Array.from(new Set(deals.map(deal => deal[ownerField]))).filter(Boolean).sort();
-            
-            // 날짜별 담당자별 딜 수 계산
-            const dailyOwnerData = {};
-            
-            // 데이터 구조 초기화
-            dates.forEach(date => {
-                dailyOwnerData[date] = {};
-                allOwners.forEach(owner => {
-                    dailyOwnerData[date][owner] = 0;
-                });
-            });
-            
-            // 실제 데이터 집계
-            deals.forEach(deal => {
-                const owner = deal[ownerField];
-                if (!owner) return;
-                
-                // 날짜 필드는 명확히 deal_created_at 사용
-                const dealDateField = 'deal_created_at';
-                let dealDate;
-                
-                if (deal[dealDateField]) {
-                    dealDate = typeof deal[dealDateField] === 'string' ? deal[dealDateField].split('T')[0] : null;
-                }
-                
-                // 날짜가 유효하고 표시 범위 내에 있으면 카운트
-                if (dealDate && dates.includes(dealDate)) {
-                    if (!dailyOwnerData[dealDate][owner]) {
-                        dailyOwnerData[dealDate][owner] = 0;
-                    }
-                    dailyOwnerData[dealDate][owner]++;
-                }
-            });
-            
-            // 데이터가 부족한 경우 샘플 데이터 사용
-            let usingSampleData = false;
-            
-            if (Object.keys(dailyOwnerData).length === 0 || allOwners.length === 0) {
-                usingSampleData = true;
-                // 샘플 담당자 목록
-                const sampleOwners = ['김영호', '박지연', '이민지', '정수진', '홍길동'];
-                
-                // 샘플 데이터 생성
-                dates.forEach(date => {
-                    dailyOwnerData[date] = {};
-                    sampleOwners.forEach(owner => {
-                        // 5-20 범위의 랜덤 숫자 생성
-                        dailyOwnerData[date][owner] = Math.floor(Math.random() * 16) + 5;
-                    });
-                });
-                
-                // 실제 테이블 업데이트를 위해 샘플 담당자 목록 사용
-                allOwners.length = 0;
-                allOwners.push(...sampleOwners);
-            }
-            
-            // 테이블 업데이트
-            const table = document.getElementById('dailyOwnerStatsTable');
-            const thead = table.querySelector('thead tr');
-            const tbody = table.querySelector('tbody');
-            
-            // 헤더 초기화
-            thead.innerHTML = '<th>날짜 / 담당자</th>';
-            
-            // 담당자 헤더 추가
-            allOwners.forEach(owner => {
-                const th = document.createElement('th');
-                th.textContent = owner;
-                thead.appendChild(th);
-            });
-            
-            // 합계 헤더 추가
-            const totalHeader = document.createElement('th');
-            totalHeader.textContent = '합계';
-            thead.appendChild(totalHeader);
-            
-            // 본문 초기화
-            tbody.innerHTML = '';
-            
-            // 날짜별 행 추가
-            dates.forEach(date => {
-                const row = document.createElement('tr');
-                
-                // 날짜 셀
-                const dateCell = document.createElement('td');
-                const displayDate = new Date(date);
-                dateCell.textContent = `${displayDate.getMonth() + 1}월 ${displayDate.getDate()}일`;
-                row.appendChild(dateCell);
-                
-                // 각 담당자별 딜 수
-                let dailyTotal = 0;
-                allOwners.forEach(owner => {
-                    const count = dailyOwnerData[date][owner] || 0;
-                    dailyTotal += count;
-                    
-                    const cell = document.createElement('td');
-                    cell.textContent = count;
-                    row.appendChild(cell);
-                });
-                
-                // 일별 합계
-                const totalCell = document.createElement('td');
-                totalCell.textContent = dailyTotal;
-                totalCell.style.fontWeight = 'bold';
-                row.appendChild(totalCell);
-                
-                tbody.appendChild(row);
-            });
-            
-            // 합계 행 추가
-            const totalRow = document.createElement('tr');
-            
-            // 합계 라벨
-            const totalLabelCell = document.createElement('td');
-            totalLabelCell.textContent = '합계';
-            totalLabelCell.style.fontWeight = 'bold';
-            totalRow.appendChild(totalLabelCell);
-            
-            // 각 담당자별 합계
-            let grandTotal = 0;
-            allOwners.forEach(owner => {
-                let ownerTotal = 0;
-                dates.forEach(date => {
-                    ownerTotal += dailyOwnerData[date][owner] || 0;
-                });
-                grandTotal += ownerTotal;
-                
-                const cell = document.createElement('td');
-                cell.textContent = ownerTotal;
-                cell.style.fontWeight = 'bold';
-                totalRow.appendChild(cell);
-            });
-            
-            // 전체 합계
-            const grandTotalCell = document.createElement('td');
-            grandTotalCell.textContent = grandTotal;
-            grandTotalCell.style.fontWeight = 'bold';
-            totalRow.appendChild(grandTotalCell);
-            
-            tbody.appendChild(totalRow);
-            
-            // 샘플 데이터 사용 메시지 표시
-            if (usingSampleData) {
-                const messageDiv = document.createElement('div');
-                messageDiv.style.textAlign = 'center';
-                messageDiv.style.marginTop = '10px';
-                messageDiv.style.color = '#888';
-                messageDiv.innerHTML = '* 샘플 데이터를 표시 중입니다. 실제 데이터가 로드되지 않았습니다.';
-                table.parentNode.appendChild(messageDiv);
-            }
-            
-            // 날짜 필터 이벤트 연결
-            if (!dateFilter.hasEventListener) {
-                dateFilter.addEventListener('change', function() {
-                    updateDailyOwnerTable(deals);
-                });
-                dateFilter.hasEventListener = true;
-            }
-        }
-
-        // 모달 제어
-        function openModal() {
-            document.getElementById('expertise-modal').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('expertise-modal').style.display = 'none';
-        }
-
-        // 전문분야 데이터 로드 (코멘트로 변경)
-        async function loadExpertise() {
-            try {
-                const { data, error } = await client
-                    .from('expertise')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) {
-                    console.error('Error loading data:', error);
-                    document.getElementById('error-message').textContent = '데이터를 불러오는데 실패했습니다: ' + error.message;
-                    return;
-                }
-
-                const expertiseList = document.getElementById('expertise-list');
-                expertiseList.innerHTML = '';
-                
-                if (data) {
-                    data.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'expertise-card';
-                        div.innerHTML = `
-                            <div class="expertise-type">${item.type}</div>
-                            <div class="expertise-value">${item.value}</div>
-                        `;
-                        expertiseList.appendChild(div);
-                    });
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('error-message').textContent = '데이터를 불러오는데 실패했습니다: ' + error.message;
-            }
-        }
-
-        // 새로운 전문분야 추가 (코멘트로 변경)
-        async function addExpertise(event) {
-            event.preventDefault();
-            
-            const typeInput = document.getElementById('type-input');
-            const valueInput = document.getElementById('value-input');
-            const errorMessage = document.getElementById('error-message');
-            
-            const type = typeInput.value.trim();
-            const value = valueInput.value.trim();
-            
-            if (!type || !value) {
-                errorMessage.textContent = '제목과 내용을 모두 입력해주세요.';
-                return;
-            }
-
-            try {
-                const { data, error } = await client
-                    .from('expertise')
-                    .insert([
-                        { 
-                            type: type,
-                            value: value
-                        }
-                    ])
-                    .select();
-
-                if (error) {
-                    console.error('Error inserting data:', error);
-                    errorMessage.textContent = '데이터 추가에 실패했습니다: ' + error.message;
-                    return;
-                }
-
-                // 입력 필드 초기화
-                typeInput.value = '';
-                valueInput.value = '';
-                errorMessage.textContent = '';
-
-                // 모달 닫기
-                closeModal();
-
-                // 데이터 다시 로드
-                loadExpertise();
-            } catch (error) {
-                console.error('Error:', error);
-                errorMessage.textContent = '데이터 추가에 실패했습니다: ' + error.message;
-            }
-        }
-
-        // 모달 외부 클릭 시 닫기
-        window.onclick = function(event) {
-            const modal = document.getElementById('expertise-modal');
-            if (event.target === modal) {
-                closeModal();
-            }
-        }
-
-        // 초기화
+        // 페이지 로드 완료 시 실행될 초기화 스크립트
         document.addEventListener('DOMContentLoaded', function() {
-            loadExpertise();
-            loadData();
+            console.log('전체 페이지 초기화 시작');
+            
+            // 실시간 업데이트 버튼에 이벤트 핸들러 추가
+            const reloadBtn = document.getElementById('reload-data-btn');
+            if (reloadBtn) {
+                reloadBtn.addEventListener('click', function() {
+                    if (typeof loadData === 'function') {
+                        console.log('데이터 새로고침 요청');
+                        loadData(true); // forceRefresh = true
+                    } else {
+                        console.error('loadData 함수를 찾을 수 없습니다');
+                    }
+                });
+            }
+            
+            console.log('전체 페이지 초기화 완료');
         });
     </script>
 </body>
